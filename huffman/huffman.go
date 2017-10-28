@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func Hamming(s string) {
+func Huffman(s string) {
 	fmt.Println(fmt.Sprintf("Huffman - Llega el parametro %v", s))
 	return
 }

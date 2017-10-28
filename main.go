@@ -1,13 +1,13 @@
-package huffman_hamming
+package main
 
 import (
-	"Hamming"
-	"Huffman"
 	"fmt"
+	"huffman_hamming/hamming"
+	"huffman_hamming/huffman"
 )
 
 func main() {
 	fmt.Println("Primer impresion")
-	Hamming.Hamming("parametro1")
-	Huffman.Huffman("parametro2")
+	hamming.Hamming("parametro1")
+	huffman.Huffman("parametro2")
 }
