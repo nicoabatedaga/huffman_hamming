@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"huffman_hamming/hamming"
 	"huffman_hamming/huffman"
+	"time"
 )
 
 func main() {
-	fmt.Println("Primer impresion")
-	hamming.Hamming("parametro1")
-	huffman.Huffman("parametro2")
+	s := time.Now().Nanosecond()
+	fmt.Println("Empiezo ejecucion")
+	hamming.Hamming()
+	huffman.Huffman()
+	f := time.Now().Nanosecond()
+	attempt := f - s
+	fmt.Printf("tiempo transcurrido: %vns", attempt)
 }
