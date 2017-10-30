@@ -1,46 +1,52 @@
 package hamming
 
+import (
+	"fmt"
+)
+
+//Hamming
 func Hamming() {
+	fmt.Println("Hamming ")
+	Matriz()
 	return
 }
 
-func getCodificacion(){
+func getCodificacion() {
 
 }
 
-func esPotenciaDeDos(){
+func esPotenciaDeDos() {
 
 }
 
-func bitsInformacion(){
+func bitsInformacion() {
 
 }
 
-func bitsParidad(){
+func bitsParidad() {
 
 }
 
-func h(){
+func h() {
 
 }
 
-func g(){
+func g() {
 
 }
 
-func Codificar(){
+func Codificar() {
 
 }
 
-func tieneError(){
+func tieneError() {
 
 }
 
-func Decodificar(){
+func Decodificar() {
 
 }
 
-func AgregarError(){
-	
-}
+func AgregarError() {
 
+}
