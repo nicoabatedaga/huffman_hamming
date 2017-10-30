@@ -1,0 +1,19 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "ix5XERm+n9qo+zxSGjD4mZTcv/U=",
+			"path": "github.com/disiqueira/gotree",
+			"revision": "4c287e3603a85571820a6a8ad100a45002150053",
+			"revisionTime": "2017-04-16T22:19:07Z"
+		},
+		{
+			"checksumSHA1": "GjWXOIpR5k1IMAR14VEUhHRRb6Q=",
+			"path": "github.com/m2omou/go-binary-search-tree",
+			"revision": "8d21d07c47aa6c3a7d91210a7e0ac9656418117d",
+			"revisionTime": "2014-07-20T05:56:01Z"
+		}
+	],
+	"rootPath": "huffman_hamming"
+}
