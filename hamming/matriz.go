@@ -8,20 +8,24 @@ type matriz struct {
 	datos [][]bool
 }
 
+//Matriz funcion de prueba
 func Matriz() {
 	k := [][]bool{{false, true, true}, {true, true, false}}
 	ma := matriz{datos: k}
 	fmt.Println("Matriz")
 	fmt.Println(ma.ToString())
 }
-func (this *matriz) Multiplicar(n matriz) matriz {
+
+//Multiplicar sirve para multiplicar dos matrices
+func (operando *matriz) Multiplicar(n matriz) matriz {
 	return n
 }
 
-//Funcion que convierte una matriz en un string para imprimir en consola
-func (this *matriz) ToString() string {
+//ToString funcion que convierte una matriz en un string para imprimir en consola
+func (operando *matriz) ToString() string {
 	var resultado string
-	for _, r := range this.datos {
+	fmt.Println(fmt.Sprintf("M: %v, N: %v", len(operando.datos), len(operando.datos)))
+	for _, r := range operando.datos {
 		resultado = resultado + "|"
 		for _, d := range r {
 			if d {
@@ -36,7 +40,7 @@ func (this *matriz) ToString() string {
 }
 
 //Funcion que multiplica dos matrices y devuelve sus resultado
-func (this *matriz) multiplicar(m *matriz) matriz {
+func (operando *matriz) multiplicar(m *matriz) matriz {
 	var v matriz
 	return v
 }

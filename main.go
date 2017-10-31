@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-	fmt.Println("Empiezo ejecucion")
+	fmt.Println("Empiezo ejecucion -")
 	hamming.Hamming()
 	//huffman.Huffman()
-	fmt.Println("Fin de la ejecucion")
+	fmt.Println("Fin de la ejecucion-")
 }
