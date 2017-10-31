@@ -6,7 +6,7 @@ import (
 
 //Hamming
 func Hamming() {
-	fmt.Println("Hamming ")
+	fmt.Println("Hamming1 ")
 	Matriz()
 	return
 }
