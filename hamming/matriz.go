@@ -5,14 +5,13 @@ import (
 )
 
 type matriz struct {
-	dato [][]bool
+	datos [][]bool
 }
 
 func Matriz() {
 	k := [][]bool{{false, true, false}, {true, true, false}}
-	ma := matriz{dato: k}
+	ma := matriz{datos: k}
 	fmt.Println("Matriz")
-	fmt.Println(ma)
 	fmt.Println(ma.ToString())
 }
 func (this *matriz) Multiplicar(n matriz) matriz {
