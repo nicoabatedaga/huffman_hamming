@@ -7,12 +7,22 @@ import (
 //Hamming es el programa de prueba
 func Hamming() {
 	fmt.Println("-Hamming-")
-	Matriz()
+
+	codificacion := 512
+	fmt.Println(fmt.Sprintf("Codificacion: %v", codificacion))
+	pruebaMatriz()
 	return
 }
 
-func getCodificacion() {
-
+func pruebaMatriz() {
+	k := [][]bool{{false, true, true}, {true, true, false}}
+	ma := Matriz{datos: k}
+	r := [][]bool{{false, true}, {true, true}, {false, true}}
+	mb := Matriz{datos: r}
+	var m Matriz
+	m = ma.Multiplicar(mb)
+	fmt.Println("Matriz Resultante:")
+	fmt.Println(m.ToString())
 }
 
 func esPotenciaDeDos() {
