@@ -9,13 +9,12 @@ func Hamming() {
 	fmt.Println("-Hamming-")
 
 	codificacion := 512
-	fmt.Println(fmt.Sprintf("Codificacion: %v", codificacion))
-<<<<<<< HEAD
-	
-	
-=======
-	pruebaMatriz()
->>>>>>> develop_joaco
+	fmt.Println(fmt.Sprintf("Codificacion: %v, Bits Paridad: %v, Bits Información: %v", 
+		codificacion,
+		bitsParidad(codificacion),
+		bitsInformacion(codificacion)))
+			
+
 	return
 }
 
@@ -34,12 +33,24 @@ func esPotenciaDeDos( ent int)bool {
 	return ((ent != 0) && ((ent & (ent-1)) == 0))
 }
 
-func bitsInformacion() {
-
+func bitsInformacion(ent int) int {
+	return(ent - (bitsParidad(ent)))
 }
 
-func bitsParidad() {
-
+//bitsParidad Devuelve que candidad de bit corresponderian a bits de paridad para 
+//determinada codifciacion, si se desea para evitar iterar, podria hacerse un mapeo
+//con los 5 valores de codificacion que exiten.
+func bitsParidad(ent int) int{
+	n:=0
+	for i:=2;i<=ent;i=i*2{
+		n++;
+	}
+	if(ent == 7){
+		return 3;}
+	if(ent == 31){
+		return 5;
+	}
+	return n
 }
 
 func h() {
