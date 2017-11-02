@@ -10,8 +10,12 @@ func Hamming() {
 
 	codificacion := 512
 	fmt.Println(fmt.Sprintf("Codificacion: %v", codificacion))
+<<<<<<< HEAD
 	
 	
+=======
+	pruebaMatriz()
+>>>>>>> develop_joaco
 	return
 }
 
