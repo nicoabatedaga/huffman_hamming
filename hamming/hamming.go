@@ -10,7 +10,8 @@ func Hamming() {
 
 	codificacion := 512
 	fmt.Println(fmt.Sprintf("Codificacion: %v", codificacion))
-	pruebaMatriz()
+	
+	
 	return
 }
 
@@ -25,8 +26,8 @@ func pruebaMatriz() {
 	fmt.Println(m.ToString())
 }
 
-func esPotenciaDeDos() {
-
+func esPotenciaDeDos( ent int)bool {
+	return ((ent != 0) && ((ent & (ent-1)) == 0))
 }
 
 func bitsInformacion() {
