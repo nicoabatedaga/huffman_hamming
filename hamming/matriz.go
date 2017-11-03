@@ -12,7 +12,7 @@ type Matriz struct {
 //ToString funcion que convierte una matriz en un string para imprimir en consola
 func (operando *Matriz) ToString() string {
 	var resultado string
-	fmt.Println(fmt.Sprintf("M: %v, N: %v", len(operando.datos), len(operando.datos[0])))
+	fmt.Println(fmt.Sprintf("M: %v, N: %v", len(operando.datos[0]),len(operando.datos)))
 	for _, r := range operando.datos {
 		resultado = resultado + "|"
 		for _, d := range r {
