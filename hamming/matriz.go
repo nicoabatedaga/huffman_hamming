@@ -71,3 +71,11 @@ func (operando *Matriz) TieneUnos() bool {
 	}
 	return false
 }
+
+func NuevaMatriz(ancho int, alto int) *Matriz{
+	aux:= make([][]bool ,ancho)
+	for i range aux{
+		aux[i] := make([]bool, alto)
+	}
+	return Matriz{datos:aux}
+}

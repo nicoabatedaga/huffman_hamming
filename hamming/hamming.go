@@ -2,6 +2,7 @@ package hamming
 
 import (
 	"fmt"
+	"math"
 )
 
 //Hamming es el programa de prueba
@@ -52,9 +53,26 @@ func bitsParidad(ent int) int{
 	}
 	return n
 }
-
-func h() {
-
+//h metodo que devuelve la matriz que se multiplica para codificar una entrada
+func h(codificacion int) Matriz {
+	ancho := codificacion
+	alto:=bitsParidad(codificacion)
+	aux := NuevaMatriz(ancho, alto )
+	for i:=0; i<alto ;i++{
+		b:=1
+		uno:=false
+		for j:=0;j<ancho;j++{
+			if(b==Pow(2,float64(i))){
+					uno= !uno;
+					b=0;
+			}
+			b=b+1;
+			if(uno){ 
+				aux.datos[j][i]=true;
+			}       
+		}
+	}
+	return aux;
 }
 
 func g() {
