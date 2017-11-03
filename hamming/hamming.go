@@ -14,7 +14,6 @@ func Hamming() {
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-			
 
 	return
 }
@@ -28,6 +27,13 @@ func pruebaMatriz() {
 	m = ma.Multiplicar(mb)
 	fmt.Println("Matriz Resultante:")
 	fmt.Println(m.ToString())
+}
+
+func pruebaHG(codificacion int){
+	fmt.Println("H:")
+	h:=h(codificacion)
+	strin:=h.ToString()
+	fmt.Println(strin)
 }
 
 func esPotenciaDeDos( ent int)bool {
@@ -62,17 +68,18 @@ func h(codificacion int) Matriz {
 		b:=1
 		uno:=false
 		for j:=0;j<ancho;j++{
-			if(b==Pow(2,float64(i))){
-					uno= !uno;
-					b=0;
+			f:=float64(i)
+			if int(math.Pow(2,f))==b{
+				b=0
+				uno = !uno
 			}
-			b=b+1;
+			b++
 			if(uno){ 
-				aux.datos[j][i]=true;
+				aux.datos[j][i]=true
 			}       
 		}
 	}
-	return aux;
+	return *aux
 }
 
 func g() {

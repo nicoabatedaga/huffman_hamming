@@ -72,10 +72,12 @@ func (operando *Matriz) TieneUnos() bool {
 	return false
 }
 
+//NuevaMatriz funcion que crea la matriz y le asigna espacio dato a su ancho x alto
 func NuevaMatriz(ancho int, alto int) *Matriz{
 	aux:= make([][]bool ,ancho)
-	for i range aux{
-		aux[i] := make([]bool, alto)
+	for i:=range aux{
+		aux[i] = make([]bool, alto)
 	}
-	return Matriz{datos:aux}
+	m:=Matriz{datos:aux}
+	return &m
 }
