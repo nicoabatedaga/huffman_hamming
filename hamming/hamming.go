@@ -14,7 +14,7 @@ func Hamming() {
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-
+		
 	return
 }
 
@@ -32,8 +32,14 @@ func pruebaMatriz() {
 func pruebaHG(codificacion int){
 	fmt.Println("H:")
 	h:=h(codificacion)
-	strin:=h.ToString()
-	fmt.Println(strin)
+	strinH:=h.ToString()
+	fmt.Println(strinH)
+
+	fmt.Println("G:")
+	g:=g(codificacion)
+	strinG:=g.ToString()
+	fmt.Println(strinG)
+
 }
 
 func esPotenciaDeDos( ent int)bool {
@@ -82,8 +88,55 @@ func h(codificacion int) Matriz {
 	return *aux
 }
 
-func g() {
-
+func g(codificacion int) *Matriz {
+        n:=bitsInformacion(codificacion)
+        m:=codificacion
+        aux:=NuevaMatriz(n,m)
+        k:=0
+        p:=-1
+        for i:=0;i<m;i++{
+            if(!esPotenciaDeDos(i+1)){
+                aux.datos[k][i]=true
+                k++
+            }else{
+                    p++
+                    r:=1
+                    uno:=false
+                    b:=1;
+                    for j:=0;j<n; j++{
+                        for cond:=true;cond;cond=esPotenciaDeDos(r){
+							r++;
+							f:=float64(p)
+                            if b== int(math.Pow(2,f)){
+                                uno=!uno
+                                b=0
+                            }
+                            b++
+						}
+						f:=float64(p)						
+                        if b == int( math.Pow(2,f)){
+                            uno=!uno
+                            b=0
+                        }
+                        b++
+                        if(uno){
+                            aux.datos[j][i]=true
+                        }
+                        r++
+                    /*
+                    if(b==Math.pow(2,(double)i)){
+                        uno= !uno;
+                        b=0;
+                    }
+                    b=b+1;
+                    if(uno){ 
+                        aux.estructura[j][i]=1;
+                    }
+                    */
+                }
+            }
+        }
+        return aux;
 }
 
 //Codificar  Cifra el archivo de entrada
