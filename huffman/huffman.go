@@ -15,7 +15,7 @@ func manejoError(err error) {
 }
 
 func Huffman() {
-	fmt.Println("empiezo el huffman")
+	fmt.Println(" - empiezo el huffman - ")
 	archivoLectura, err := os.Open("./archivoNuevo")
 	manejoError(err)
 	defer archivoLectura.Close()
@@ -25,6 +25,7 @@ func Huffman() {
 	fmt.Println(fmt.Sprintf("Lista de caracteres obtenida: %v", listaDeCaracteres))
 	raizDelArbol := generarArbol(listaDeCaracteres)
 	fmt.Println(fmt.Sprintf("La raiz de arbol que obtenemos es: %v", raizDelArbol))
+	imprimirEnProfundidad(*raizDelArbol)
 	return
 }
 
@@ -64,21 +65,20 @@ func getListaDeCaracteres(mapa map[string]int) []Caracter {
 func generarArbol(list []Caracter) *Caracter {
 	for len(list) >= 2 {
 		c1 := list[0]
-		list = append(list[:0], list[0+1:]...)
+		list = append(list[:0], list[0+1:]...) // Elimino el primer elemento de la lista
 		c2 := list[0]
-		list = append(list[:0], list[0+1:]...)
-		fmt.Println(fmt.Sprintf("Tenemos el caracter c1: %v", c1))
-		fmt.Println(fmt.Sprintf("Tenemos el caracter c2: %v", c2))
-		fmt.Println(fmt.Sprintf("Tenemos la lista: %v", list))
+		list = append(list[:0], list[0+1:]...) // Elimino el primer elemento de la lista
 		list = append(list, crearPadre(c1, c2))
 		if len(list) > 1 {
 			sort.Slice(list, func(i, j int) bool {
 				return list[i].Ocurrencias < list[j].Ocurrencias
 			})
 		}
-		fmt.Println(fmt.Sprintf("Tenemos la lista despues de meter el padre: %v \n\n", list))
 	}
-	return &list[0]
+	imprimirArbol(&list[0])
+	arbol := evaluarNodos(list[0]) // segundo parametro nil, ya que no tiene padre
+	return arbol
+	// return &list[0]
 }
 
 // Agarra dos nodos, crea un nodo padre y los pone como sus hijos
@@ -86,8 +86,85 @@ func generarArbol(list []Caracter) *Caracter {
 func crearPadre(c1, c2 Caracter) Caracter {
 	padre := Caracter{}
 	padre.Caracter = "padre"
+	padre.Codigo = nil
+	padre.CodigoString = ""
 	padre.Ocurrencias = c1.Ocurrencias + c2.Ocurrencias
 	padre.HijoIzquierdo = &c1
 	padre.HijoDerecho = &c2
 	return padre
+}
+
+func evaluarNodos(raiz Caracter) *Caracter {
+	if raiz.HijoIzquierdo != nil {
+		raiz.HijoIzquierdo.CodigoString = "0"
+		raiz.HijoIzquierdo = evaluarSubNodos(*raiz.HijoIzquierdo)
+	}
+	if raiz.HijoDerecho != nil {
+		raiz.HijoDerecho.CodigoString = "1"
+		raiz.HijoDerecho = evaluarSubNodos(*raiz.HijoDerecho)
+	}
+	return &raiz
+}
+
+func evaluarSubNodos(raiz Caracter) *Caracter {
+	if raiz.HijoIzquierdo != nil {
+		raiz.HijoIzquierdo.CodigoString = raiz.CodigoString + "0"
+		raiz.HijoIzquierdo = evaluarSubNodos(*raiz.HijoIzquierdo)
+	}
+	if raiz.HijoDerecho != nil {
+		raiz.HijoDerecho.CodigoString = raiz.CodigoString + "1"
+		raiz.HijoDerecho = evaluarSubNodos(*raiz.HijoDerecho)
+	}
+	return &raiz
+}
+
+func imprimirNodo(c *Caracter) {
+	ocurrencias := c.Ocurrencias
+	caracter := c.Caracter
+	codigo := c.CodigoString
+	hd := c.HijoDerecho
+	hi := c.HijoIzquierdo
+	if caracter == "padre" {
+		fmt.Println(fmt.Sprintf("Es PADRE con %v ocurrencias y codigo %v, y los hijos son\n	HIJO DERECHO: %v\n	HIJO IZQUIERDO: %v\n", ocurrencias, codigo, hd.CodigoString, hi.CodigoString))
+	} else {
+		fmt.Println(fmt.Sprintf("Es un nodo HOJA del caracter %v, con %v ocurrencias y codigo %v\n", caracter, ocurrencias, codigo))
+	}
+	return
+}
+
+func imprimirArbol(raiz *Caracter) {
+	imprimirNodo(raiz)
+	if raiz.HijoIzquierdo != nil {
+		imprimirArbol(raiz.HijoIzquierdo)
+	}
+	if raiz.HijoDerecho != nil {
+		imprimirArbol(raiz.HijoDerecho)
+	}
+	return
+}
+
+func imprimirEnProfundidad(raiz Caracter) {
+	imprimirNodo(&raiz)
+	listaImprimirEnProfundidad := []*Caracter{}
+	if raiz.HijoIzquierdo != nil {
+		listaImprimirEnProfundidad = append(listaImprimirEnProfundidad, raiz.HijoIzquierdo)
+	}
+	if raiz.HijoDerecho != nil {
+		listaImprimirEnProfundidad = append(listaImprimirEnProfundidad, raiz.HijoDerecho)
+	}
+	var next *Caracter
+	for e := listaImprimirEnProfundidad[0]; e != nil; e = next {
+		imprimirNodo(e)
+		if e.HijoIzquierdo != nil {
+			listaImprimirEnProfundidad = append(listaImprimirEnProfundidad, e.HijoIzquierdo)
+		}
+		if e.HijoDerecho != nil {
+			listaImprimirEnProfundidad = append(listaImprimirEnProfundidad, e.HijoDerecho)
+		}
+		if len(listaImprimirEnProfundidad) <= 1 {
+			break
+		}
+		listaImprimirEnProfundidad = append(listaImprimirEnProfundidad[:0], listaImprimirEnProfundidad[0+1:]...)
+		next = listaImprimirEnProfundidad[0]
+	}
 }
