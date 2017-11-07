@@ -14,7 +14,7 @@ func Hamming() {
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-		
+	pruebaHG(7)
 	return
 }
 
@@ -67,13 +67,13 @@ func bitsParidad(ent int) int{
 }
 //h metodo que devuelve la matriz que se multiplica para codificar una entrada
 func h(codificacion int) Matriz {
-	ancho := codificacion
-	alto:=bitsParidad(codificacion)
+	alto := codificacion
+	ancho:=bitsParidad(codificacion)
 	aux := NuevaMatriz(ancho, alto )
-	for i:=0; i<alto ;i++{
+	for i:=0; i<ancho ;i++{
 		b:=1
 		uno:=false
-		for j:=0;j<ancho;j++{
+		for j:=0;j<alto;j++{
 			f:=float64(i)
 			if int(math.Pow(2,f))==b{
 				b=0
@@ -81,30 +81,31 @@ func h(codificacion int) Matriz {
 			}
 			b++
 			if(uno){ 
-				aux.datos[j][i]=true
+				aux.datos[i][j]=true
 			}       
 		}
 	}
 	return *aux
 }
 
+//g Funcion que crea la matriz generadora 
 func g(codificacion int) *Matriz {
-        n:=bitsInformacion(codificacion)
-        m:=codificacion
+        n:=codificacion
+        m:=bitsInformacion(codificacion)
         aux:=NuevaMatriz(n,m)
         k:=0
         p:=-1
-        for i:=0;i<m;i++{
+        for i:=0;i<n;i++{
             if(!esPotenciaDeDos(i+1)){
-                aux.datos[k][i]=true
+                aux.datos[i][k]=true
                 k++
             }else{
                     p++
                     r:=1
                     uno:=false
                     b:=1;
-                    for j:=0;j<n; j++{
-                        for cond:=true;cond;cond=esPotenciaDeDos(r){
+                    for j:=0;j<m; j++{
+                        for ;esPotenciaDeDos(r);{
 							r++;
 							f:=float64(p)
                             if b== int(math.Pow(2,f)){
@@ -120,19 +121,9 @@ func g(codificacion int) *Matriz {
                         }
                         b++
                         if(uno){
-                            aux.datos[j][i]=true
+                            aux.datos[i][j]=true
                         }
-                        r++
-                    /*
-                    if(b==Math.pow(2,(double)i)){
-                        uno= !uno;
-                        b=0;
-                    }
-                    b=b+1;
-                    if(uno){ 
-                        aux.estructura[j][i]=1;
-                    }
-                    */
+                        r++                    
                 }
             }
         }
