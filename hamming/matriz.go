@@ -28,28 +28,23 @@ func (operando *Matriz) ToString() string {
 }
 
 //Multiplicar Funcion que multiplica dos matrices y devuelve sus resultado
-func (operando *Matriz) Multiplicar(m Matriz) Matriz {
-	if operando.datos != nil || operando.datos[0] != nil || m.datos != nil || m.datos[0] != nil {
-		fmt.Println(fmt.Sprintf("M- Ancho: %v, Alto: %v ", len(operando.datos), len(operando.datos[0])))
-		fmt.Println(fmt.Sprintf("N-Ancho: %v, Alto: %v", len(m.datos), len(m.datos[0])))
+func (operando *Matriz) Multiplicar(mE *Matriz) Matriz {
+	if operando.datos != nil || operando.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {	
+		nO := len(operando.datos[0])
+		mEn := len(mE.datos)
 
-		if len(operando.datos) == len(m.datos[0]) {
-			//La matriz resultante es de la forma rW x rH
-			rW := len(operando.datos)
-			rH := len(m.datos[0])
-			aux := make([][]bool, rW)
-			for i := range operando.datos {
-				aux[i] = make([]bool, rH)
-			}
-			for k := 0; k < rW; k++ {
-				for j := 0; j < rH; j++ {
-					for i := 0; i < rW; i++ {
-						aux[k][j] = (operando.datos[k][i] && m.datos[i][j] != aux[k][j])
+		if nO == mEn {
+			m := len(operando.datos)
+			n := len(mE.datos[0])
+			aux := NuevaMatriz(m,n)
+			for k := 0; k < m; k++ {
+				for j := 0; j < n; j++ {
+					for i := 0; i < nO; i++ {
+						aux.datos[k][j] = ((operando.datos[k][i] && mE.datos[i][j]) != aux.datos[k][j])
 					}
 				}
 			}
-			v := Matriz{datos: aux}
-			return v
+			return *aux
 		}
 		fmt.Println("Error:El ancho y el alto de las matrices no concuerdan")
 	} else {
@@ -80,4 +75,14 @@ func NuevaMatriz(ancho int, alto int) *Matriz{
 	}
 	m:=Matriz{datos:aux}
 	return &m
+}
+
+//MatrizColumna apartir de una cadena de bytes crea la matriz columna
+func MatrizColumna(entrada []bool) *Matriz{
+	aux:= NuevaMatriz(len(entrada),1)
+	for i,b := range entrada{
+		aux.datos[i][0] = b
+	}
+	return aux
+
 }

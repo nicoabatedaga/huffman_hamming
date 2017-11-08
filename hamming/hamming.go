@@ -24,7 +24,7 @@ func pruebaMatriz() {
 	r := [][]bool{{false, true}, {true, true}, {false, true}}
 	mb := Matriz{datos: r}
 	var m Matriz
-	m = ma.Multiplicar(mb)
+	m = ma.Multiplicar(&mb)
 	fmt.Println("Matriz Resultante:")
 	fmt.Println(m.ToString())
 }
@@ -44,6 +44,28 @@ func pruebaHGR(codificacion int){
 	r:=r(codificacion)
 	strinR:=r.ToString()
 	fmt.Println(strinR)
+
+	
+	fmt.Println("Entrada:")
+	b:=[]bool{true,false,true,true}
+	c:=MatrizColumna(b)
+	strinC:=c.ToString()
+	fmt.Println(strinC)
+
+	fmt.Println("Cifrada:")
+	cifrada:=g.Multiplicar(c)
+	strinCifrada := cifrada.ToString()
+	fmt.Println(strinCifrada)
+
+	fmt.Println("Descifrada:")
+	descifrada := r.Multiplicar(&cifrada)
+	strinDescifrada := descifrada.ToString()
+	fmt.Println(strinDescifrada)
+
+	fmt.Println("Sindrome:")
+	sindrome := h.Multiplicar(&cifrada)
+	strinSindrome := sindrome.ToString()
+	fmt.Println(strinSindrome)
 
 }
 
