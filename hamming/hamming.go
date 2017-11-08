@@ -3,6 +3,8 @@ package hamming
 import (
 	"fmt"
 	"math"
+	"math/rand"
+	"time"
 )
 
 //Hamming es el programa de prueba
@@ -23,8 +25,10 @@ func pruebaMatriz() {
 	ma := Matriz{datos: k}
 	r := [][]bool{{false, true}, {true, true}, {false, true}}
 	mb := Matriz{datos: r}
-	var m Matriz
-	m = ma.Multiplicar(&mb)
+	error,m := ma.Multiplicar(&mb)
+	if error{
+		fmt.Println("Error al multiplicar")
+	}
 	fmt.Println("Matriz Resultante:")
 	fmt.Println(m.ToString())
 }
@@ -52,20 +56,15 @@ func pruebaHGR(codificacion int){
 	strinC:=c.ToString()
 	fmt.Println(strinC)
 
-	fmt.Println("Cifrada:")
-	cifrada:=g.Multiplicar(c)
-	strinCifrada := cifrada.ToString()
-	fmt.Println(strinCifrada)
+	error,codificada := g.Multiplicar(c)
 
-	fmt.Println("Descifrada:")
-	descifrada := r.Multiplicar(&cifrada)
-	strinDescifrada := descifrada.ToString()
-	fmt.Println(strinDescifrada)
+	AgregarError(&codificada)	
+	error,posicion:=TieneError(&codificada)
+	fmt.Println(fmt.Sprintf("Tienen errores:%v en %v",error,posicion))
 
-	fmt.Println("Sindrome:")
-	sindrome := h.Multiplicar(&cifrada)
-	strinSindrome := sindrome.ToString()
-	fmt.Println(strinSindrome)
+	CorregirError(&codificada)
+	error,posicion=TieneError(&codificada)
+	fmt.Println(fmt.Sprintf("Tienen errores:%v en %v",error,posicion))
 
 }
 
@@ -173,12 +172,38 @@ func r(codificacion int) *Matriz {
 
 
 //Codificar  Cifra el archivo de entrada
-func Codificar() {
-
+func Codificar(operando *Matriz) (bool,Matriz){
+	cod := len(operando.datos)
+	h:=h(cod)
+	error,codificada :=h.Multiplicar(operando)
+	if error{
+		return true,*operando
+	}
+	return false,codificada
+	
 }
 
-func tieneError() {
+//TieneError verifica si tiene error una matriz, y devuelve la posicion del mismo.
+func TieneError(operando *Matriz) (bool, int){
+	codificacion:= len(operando.datos)
+	h := h(codificacion)
+	error,sindrome := h.Multiplicar(operando)
+	if error {
+		fmt.Println("Error al multiplicar")
+		return true,-1
+	}
+	resultB:=sindrome.TieneUnos()
+	resultI := -1
+	for i,fila:=range sindrome.datos{
+		for _,b := range fila{
+			if b{
+				f := float64(i)
+				resultI=resultI+int(math.Pow(2,f))
+			}
+		}
+	}
 
+ return resultB ,resultI
 }
 
 //Decodificar descrifra el archivo de entrada
@@ -186,7 +211,30 @@ func Decodificar() {
 
 }
 
-//AgregarError a un archivo
-func AgregarError() {
+//AgregarError a un archivo, si devuelve true es porque agrego error, sino ya habia antes un error
+func AgregarError(operando *Matriz) bool{
+	tieneError,_ :=TieneError(operando)
+	if tieneError{
+		return false
+	}
+	n:= len(operando.datos)
+	m:= len(operando.datos[0])
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	i := r.Intn(n)
+	j := r.Intn(m)
+	operando.datos[i][j] = !operando.datos[i][j]
+	return true
+}
+
+//CorregirError toma como entrada una matriz, si la corrige retorna verdadero, sino retorna false
+func CorregirError(operando *Matriz)bool {
+	tieneError, posicion := TieneError(operando)
+	if tieneError{
+		if posicion !=-1{
+			operando.datos[posicion][0] = !operando.datos[posicion][0]	
+			return true
+		}
+	}
+	return false
 
 }

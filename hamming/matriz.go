@@ -28,7 +28,7 @@ func (operando *Matriz) ToString() string {
 }
 
 //Multiplicar Funcion que multiplica dos matrices y devuelve sus resultado
-func (operando *Matriz) Multiplicar(mE *Matriz) Matriz {
+func (operando *Matriz) Multiplicar(mE *Matriz)( bool,Matriz ){
 	if operando.datos != nil || operando.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {	
 		nO := len(operando.datos[0])
 		mEn := len(mE.datos)
@@ -44,7 +44,7 @@ func (operando *Matriz) Multiplicar(mE *Matriz) Matriz {
 					}
 				}
 			}
-			return *aux
+			return false,*aux
 		}
 		fmt.Println("Error:El ancho y el alto de las matrices no concuerdan")
 	} else {
@@ -52,7 +52,7 @@ func (operando *Matriz) Multiplicar(mE *Matriz) Matriz {
 	}
 	c := [][]bool{{}}
 	var v = Matriz{datos: c}
-	return v
+	return true,v
 }
 
 //TieneUnos controla si algun valor de la matriz es igual a 1
