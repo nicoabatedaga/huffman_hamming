@@ -11,12 +11,12 @@ import (
 func Hamming() {
 	fmt.Println("-Hamming-")
 
-	codificacion := 512
+	codificacion := 32
 	fmt.Println(fmt.Sprintf("Codificacion: %v, Bits Paridad: %v, Bits Información: %v", 
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-	pruebaHGR(7)
+	pruebaHGR(32)
 	return
 }
 
@@ -51,8 +51,7 @@ func pruebaHGR(codificacion int){
 
 	
 	fmt.Println("Entrada:")
-	b:=[]bool{true,false,true,true}
-	c:=MatrizColumna(b)
+	c:=matrizEntradaPrueba(codificacion)
 	strinC:=c.ToString()
 	fmt.Println(strinC)
 
@@ -236,5 +235,16 @@ func CorregirError(operando *Matriz)bool {
 		}
 	}
 	return false
+}
 
+//matrizEntradaPrueba genera una matriz de entrada aleatoria del tamaño de la codificacion
+func matrizEntradaPrueba (codificacion int) *Matriz{
+	aux := make([]bool ,bitsInformacion(codificacion))
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := range aux{
+		j := r.Intn(100)
+		aux[i]= (j%2 == 1)
+	}
+	m:=MatrizColumna(aux)
+	return  m
 }
