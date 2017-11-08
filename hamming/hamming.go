@@ -16,7 +16,7 @@ func Hamming() {
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-	pruebaHGR(32)
+	pruebaHGR(7)
 	return
 }
 
@@ -65,6 +65,17 @@ func pruebaHGR(codificacion int){
 	error,posicion=TieneError(&codificada)
 	fmt.Println(fmt.Sprintf("Tienen errores:%v en %v",error,posicion))
 
+	fmt.Println("Corregida:")
+	fmt.Println(codificada.ToString())
+
+	fmt.Println("Decodificada:")
+	error,decodificada := Decodificar(&codificada)
+	if !error{
+		fmt.Println(decodificada.ToString())			
+	}else{
+		fmt.Println("Error al multiplicar por R")
+	}
+	
 }
 
 func esPotenciaDeDos( ent int)bool {
@@ -206,7 +217,14 @@ func TieneError(operando *Matriz) (bool, int){
 }
 
 //Decodificar descrifra el archivo de entrada
-func Decodificar() {
+func Decodificar(operando *Matriz)(bool,*Matriz) {
+	cod := len(operando.datos)
+	r:=r(cod)
+	error,decodificada :=r.Multiplicar(operando)
+	if error{
+		return true,operando
+	}
+	return false, &decodificada
 
 }
 
