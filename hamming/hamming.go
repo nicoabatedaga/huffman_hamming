@@ -14,7 +14,7 @@ func Hamming() {
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-	pruebaHG(7)
+	pruebaHGR(7)
 	return
 }
 
@@ -29,7 +29,7 @@ func pruebaMatriz() {
 	fmt.Println(m.ToString())
 }
 
-func pruebaHG(codificacion int){
+func pruebaHGR(codificacion int){
 	fmt.Println("H:")
 	h:=h(codificacion)
 	strinH:=h.ToString()
@@ -39,6 +39,11 @@ func pruebaHG(codificacion int){
 	g:=g(codificacion)
 	strinG:=g.ToString()
 	fmt.Println(strinG)
+	
+	fmt.Println("R:")
+	r:=r(codificacion)
+	strinR:=r.ToString()
+	fmt.Println(strinR)
 
 }
 
@@ -129,6 +134,21 @@ func g(codificacion int) *Matriz {
         }
         return aux;
 }
+//r Funcion que crea la matriz decodificadora 
+func r(codificacion int) *Matriz {
+	n:=bitsInformacion(codificacion)
+	m:=codificacion
+	aux:=NuevaMatriz(n,m)
+	k:=0
+	for i:=0;i<m;i++{
+		if(!esPotenciaDeDos(i+1)){
+			aux.datos[k][i]=true
+			k++
+		}
+	}
+	return aux;
+}
+
 
 //Codificar  Cifra el archivo de entrada
 func Codificar() {
