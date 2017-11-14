@@ -16,7 +16,7 @@ func Hamming() {
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-	pruebaHGR(7)
+	pruebaHGR(7,true)
 	return
 }
 
@@ -33,27 +33,27 @@ func pruebaMatriz() {
 	fmt.Println(m.ToString())
 }
 
-func pruebaHGR(codificacion int){
+func pruebaHGR(codificacion int,imprimir bool){
 	fmt.Println("H:")
 	h:=h(codificacion)
 	strinH:=h.ToString()
-	fmt.Println(strinH)
+	if imprimir {fmt.Println(strinH)}
 
 	fmt.Println("G:")
 	g:=g(codificacion)
 	strinG:=g.ToString()
-	fmt.Println(strinG)
+	if imprimir {fmt.Println(strinG)}
 	
 	fmt.Println("R:")
 	r:=r(codificacion)
 	strinR:=r.ToString()
-	fmt.Println(strinR)
+	if imprimir {fmt.Println(strinR)}
 
 	
 	fmt.Println("Entrada:")
 	c:=matrizEntradaPrueba(codificacion)
 	strinC:=c.ToString()
-	fmt.Println(strinC)
+	if imprimir {fmt.Println(strinC)}
 
 	error,codificada := g.Multiplicar(c)
 
@@ -66,12 +66,12 @@ func pruebaHGR(codificacion int){
 	fmt.Println(fmt.Sprintf("Tienen errores:%v en %v",error,posicion))
 
 	fmt.Println("Corregida:")
-	fmt.Println(codificada.ToString())
+	if imprimir {fmt.Println(codificada.ToString())}
 
 	fmt.Println("Decodificada:")
 	error,decodificada := Decodificar(&codificada)
-	if !error{
-		fmt.Println(decodificada.ToString())			
+	if !error{			
+		if imprimir {fmt.Println(decodificada.ToString())}
 	}else{
 		fmt.Println("Error al multiplicar por R")
 	}
@@ -91,7 +91,7 @@ func bitsInformacion(ent int) int {
 //con los 5 valores de codificacion que exiten.
 func bitsParidad(ent int) int{
 	n:=0
-	for i:=2;i<=ent;i=i*2{
+	for i:=1;i<=ent;i=i*2{
 		n++;
 	}
 	if(ent == 7){
