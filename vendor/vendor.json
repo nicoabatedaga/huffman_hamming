@@ -9,18 +9,6 @@
 			"revisionTime": "2017-04-16T22:19:07Z"
 		},
 		{
-			"checksumSHA1": "nfQVrxtHETL7bVYiJIZhstNevXM=",
-			"path": "github.com/golang-collections/go-datastructures/bitarray",
-			"revision": "59788d5eb2591d3497ffb8fafed2f16fe00e7775",
-			"revisionTime": "2015-02-11T16:07:25Z"
-		},
-		{
-			"checksumSHA1": "MD+p/jleECAZBBXo4EfsYNIuvmk=",
-			"path": "github.com/jlabath/bitarray",
-			"revision": "1145a4e46dfe3721d658a97177c5463c63a0e0a2",
-			"revisionTime": "2015-06-11T02:30:25Z"
-		},
-		{
 			"checksumSHA1": "GjWXOIpR5k1IMAR14VEUhHRRb6Q=",
 			"path": "github.com/m2omou/go-binary-search-tree",
 			"revision": "8d21d07c47aa6c3a7d91210a7e0ac9656418117d",

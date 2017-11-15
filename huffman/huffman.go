@@ -2,18 +2,10 @@ package huffman
 
 import (
 	"bufio"
-	"encoding/gob"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
-	"sync"
-
-	"github.com/jlabath/bitarray"
-)
-
-var (
-	mapita map[string]string
 )
 
 func manejoError(err error) {
@@ -24,35 +16,30 @@ func manejoError(err error) {
 
 func Huffman() {
 	fmt.Println(" - empiezo el huffman - ")
-	hacerBitArray()
+	archivoLectura, err := os.Open("./archivoNuevo")
+	manejoError(err)
+	defer archivoLectura.Close()
+	scanner := bufio.NewScanner(archivoLectura)
 	var listaDeCaracteres []Caracter
-	listaDeCaracteres = getListaDeCaracteres(recorroArchivoYCuento("./archivoNuevo"))
-	// fmt.Println(fmt.Sprintf("Lista de caracteres obtenida: %v", listaDeCaracteres))
+	listaDeCaracteres = getListaDeCaracteres(recorroArchivoYCuento(scanner))
+	fmt.Println(fmt.Sprintf("Lista de caracteres obtenida: %v", listaDeCaracteres))
 	raizDelArbol := generarArbol(listaDeCaracteres)
-	// fmt.Println(fmt.Sprintf("La raiz de arbol que obtenemos es: %v", raizDelArbol))
-	// imprimirEnProfundidad(*raizDelArbol)
-	treeAsMap(raizDelArbol)
-	fmt.Println(mapita)
-	recorroArchivoYEscriboArchivoCodificado("./archivoNuevo", "./archivoNuevoComprimido.huff")
+	fmt.Println(fmt.Sprintf("La raiz de arbol que obtenemos es: %v", raizDelArbol))
+	imprimirEnProfundidad(*raizDelArbol)
 	return
 }
 
 // Leo linea a linea e itero en cada linea por cada caracter y guardo en un mapa
 // que ingreso por caracter y obtengo la cantidad de apariciones
-func recorroArchivoYCuento(nfr string) map[string]int {
-	archivoLectura, err := os.Open(nfr)
-	manejoError(err)
-	scanner := bufio.NewScanner(archivoLectura)
+func recorroArchivoYCuento(scanner *bufio.Scanner) map[string]int {
 	ocurrencias := map[string]int{}
 	for scanner.Scan() {
+		ocurrencias["newLine"] = ocurrencias["newLine"] + 1 //Sumo el salto de linea
 		caracteresDeLinea := strings.Split(scanner.Text(), "")
 		for i := 0; i < len(caracteresDeLinea); i++ {
 			ocurrencias[caracteresDeLinea[i]]++
 		}
-		ocurrencias["newLine"]++ //Sumo el salto de linea
 	}
-	ocurrencias["newLine"]-- //Saco el enter de sobra si es que no hay otra linea
-	archivoLectura.Close()
 	return ocurrencias
 }
 
@@ -88,6 +75,7 @@ func generarArbol(list []Caracter) *Caracter {
 			})
 		}
 	}
+	imprimirArbol(&list[0])
 	arbol := evaluarNodos(list[0]) // segundo parametro nil, ya que no tiene padre
 	return arbol
 	// return &list[0]
@@ -137,7 +125,7 @@ func imprimirNodo(c *Caracter) {
 	hd := c.HijoDerecho
 	hi := c.HijoIzquierdo
 	if caracter == "padre" {
-		fmt.Println(fmt.Sprintf("Es PADRE con %v ocurrencias y codigo %v, y los hijos son\n	HIJO IZQUIERDO: %v	Ocurrencias:%v\n	HIJO DERECHO: %v	Ocurrencias:%v\n", ocurrencias, codigo, hi.CodigoString, hi.Ocurrencias, hd.CodigoString, hd.Ocurrencias))
+		fmt.Println(fmt.Sprintf("Es PADRE con %v ocurrencias y codigo %v, y los hijos son\n	HIJO DERECHO: %v\n	HIJO IZQUIERDO: %v\n", ocurrencias, codigo, hd.CodigoString, hi.CodigoString))
 	} else {
 		fmt.Println(fmt.Sprintf("Es un nodo HOJA del caracter %v, con %v ocurrencias y codigo %v\n", caracter, ocurrencias, codigo))
 	}
@@ -179,116 +167,4 @@ func imprimirEnProfundidad(raiz Caracter) {
 		listaImprimirEnProfundidad = append(listaImprimirEnProfundidad[:0], listaImprimirEnProfundidad[0+1:]...)
 		next = listaImprimirEnProfundidad[0]
 	}
-}
-
-func treeAsMap(c *Caracter) {
-	mapita = map[string]string{}
-	treeAsMapAux(c)
-}
-func treeAsMapAux(c *Caracter) {
-	if c.Caracter != "padre" {
-		mapita[c.Caracter] = c.CodigoString
-	}
-	if c.HijoIzquierdo != nil {
-		treeAsMapAux(c.HijoIzquierdo)
-	}
-	if c.HijoDerecho != nil {
-		treeAsMapAux(c.HijoDerecho)
-	}
-}
-
-//
-func recorroArchivoYEscriboArchivoCodificado(nfr, nfw string) {
-	archivoLectura, err := os.Open(nfr)
-	manejoError(err)
-	archivoEscritura, err := os.Create(nfw)
-	manejoError(err)
-	scanner := bufio.NewScanner(archivoLectura)
-	writer := bufio.NewWriter(archivoEscritura)
-	enc := gob.NewEncoder(writer)
-	var wg sync.WaitGroup
-	channelToWrite := make(chan *bitarray.BitArray)
-	go func(channelToWrite chan *bitarray.BitArray) {
-		ba := bitarray.New(8)
-		iterba := 0
-
-		for scanner.Scan() {
-			// spliteo en todos los caracteres de la linea
-			caracteresDeLinea := strings.Split(scanner.Text(), "")
-			// itero por cada caracter
-			for i := 0; i < len(caracteresDeLinea); i++ {
-				// spliteo cada codigo de 0 y 1 de cada caracter
-				splitCerosUnos := strings.Split(mapita[caracteresDeLinea[i]], "")
-				// recorro sobre este split de 0 y 1
-				for iSplit := 0; iSplit < len(splitCerosUnos); iSplit++ {
-					// Si es un 1 entonces le hago un set al bitarray
-					if splitCerosUnos[iSplit] == "1" {
-						ba.Set(iterba)
-					}
-					// incremento el contador para recorrer el bitarray
-					iterba++
-					// compruebo que no se me pase del tamaño 8, si se pasa entonces
-					// meto el bitarray en el canal y reseteo el bitarray y el iterador
-					if iterba == 8 {
-						/*---------------*/
-						// Agregar un contador de las cosas que agrego al canal
-						// wait group
-						wg.Add(1)
-						channelToWrite <- ba
-						/*---------------*/
-						ba.Fill(0)
-						iterba = 0
-					}
-				}
-			}
-			//TODO: Insertar new line
-			splitNewLine := strings.Split(mapita["newLine"], "")
-			for iSplit := 0; iSplit < len(splitNewLine); iSplit++ {
-				if splitNewLine[iSplit] == "1" {
-					ba.Set(iterba)
-				}
-				iterba++
-				if iterba == 8 {
-					/*---------------*/
-					// Agregar un contador de las cosas que agrego al canal
-					// wait group
-					wg.Add(1)
-					channelToWrite <- ba
-					/*---------------*/
-					ba.Fill(0)
-					iterba = 0
-				}
-			}
-		}
-
-		return
-	}(channelToWrite)
-
-	for scanner.Scan() {
-		caracteresDeLinea := strings.Split(scanner.Text(), "")
-		for i := 0; i < len(caracteresDeLinea); i++ {
-			enc.Encode(mapita[caracteresDeLinea[i]])
-			// writer.WriteString(mapita[caracteresDeLinea[i]])
-			fmt.Println("imprimo", mapita[caracteresDeLinea[i]])
-		}
-		writer.WriteString(mapita["newLine"])
-	}
-	writer.Flush()
-	archivoEscritura.Close()
-	archivoLectura.Close()
-}
-
-func hacerBitArray() {
-	ba := bitarray.New(8)
-	ba.Set(0)
-	ba.Set(2)
-	ba.Set(4)
-	ba.Set(5)
-	ba.Set(6)
-	ba.Set(7)
-	bi := ba.GetData()
-	fmt.Println(ba)
-	ba.Fill(0)
-	fmt.Println(ba)
-	fmt.Println(bi)
 }
