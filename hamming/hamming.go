@@ -5,10 +5,25 @@ import (
 	"math"
 	"math/rand"
 	"time"
+	"os"
+	"runtime/trace"
 )
 
 //Hamming es el programa de prueba
 func Hamming() {
+	f, err := os.Create("trace.out")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	err = trace.Start(f)
+	if err != nil {
+		panic(err)
+	}
+	defer trace.Stop()
+
+    start := time.Now()
 	fmt.Println("-Hamming-")
 
 	codificacion := 32
@@ -16,19 +31,51 @@ func Hamming() {
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
-	pruebaHGR(7,true)
+	//pruebaMatriz32()
+	pruebaHGR(128,false)
+	
+    elapsed := time.Since(start)
+    fmt.Println(fmt.Sprintf("Estuvo ejecutando: %s", elapsed))
 	return
 }
 
-func pruebaMatriz() {
-	k := [][]bool{{false, true, true}, {true, true, false}}
-	ma := Matriz{datos: k}
-	r := [][]bool{{false, true}, {true, true}, {false, true}}
-	mb := Matriz{datos: r}
-	error,m := ma.Multiplicar(&mb)
+func pruebaMatriz32(){
+	ma := g(7)
+	ma32 := ma.MatrizTo32()
+	r32 := []uint32{5}
+	mb := MatrizFila(r32) 
+	error,m := ma32.Mult(mb)
 	if error{
 		fmt.Println("Error al multiplicar")
 	}
+	
+	fmt.Println("g:")
+	fmt.Println(ma32.ToString())
+	fmt.Println("Entrada:")
+	fmt.Println(mb.ToString())
+	fmt.Println("Matriz Resultante:")
+	fmt.Println(m.ToString())
+	/*
+	fmt.Println("g:")
+	fmt.Println(ma32.ToStringB(7))
+	fmt.Println("Entrada:")
+	fmt.Println(mb.ToStringB(7))
+	fmt.Println("Matriz Resultante:")
+	fmt.Println(m.ToStringB(7))*/
+}
+
+func pruebaMatriz() {
+	ma := g(7)
+	mb := matrizEntradaPrueba(7)
+	error,m := ma.Multiplicar(mb)
+	if error{
+		fmt.Println("Error al multiplicar")
+	}
+	
+	fmt.Println("G:")
+	fmt.Println(ma.ToString())
+	fmt.Println("Entrada:")
+	fmt.Println(mb.ToString())
 	fmt.Println("Matriz Resultante:")
 	fmt.Println(m.ToString())
 }
@@ -47,6 +94,54 @@ func pruebaHGR(codificacion int,imprimir bool){
 	fmt.Println("R:")
 	r:=r(codificacion)
 	strinR:=r.ToString()
+	if imprimir {fmt.Println(strinR)}
+
+	
+	fmt.Println("Entrada:")
+	c:=matrizEntradaPrueba(codificacion)
+	strinC:=c.ToString()
+	if imprimir {fmt.Println(strinC)}
+
+	error,codificada := g.Multiplicar(c)
+
+	AgregarError(&codificada)	
+	error,posicion:=TieneError(&codificada)
+	fmt.Println(fmt.Sprintf("Tienen errores:%v en %v",error,posicion))
+
+	CorregirError(&codificada)
+	error,posicion=TieneError(&codificada)
+	fmt.Println(fmt.Sprintf("Tienen errores:%v en %v",error,posicion))
+
+	fmt.Println("Corregida:")
+	if imprimir {fmt.Println(codificada.ToString())}
+
+	fmt.Println("Decodificada:")
+	error,decodificada := Decodificar(&codificada)
+	if !error{			
+		if imprimir {fmt.Println(decodificada.ToString())}
+	}else{
+		fmt.Println("Error al multiplicar por R")
+	}
+	
+}
+
+func pruebaHGR32(codificacion int,imprimir bool){
+	fmt.Println("H:")
+	h:=h(codificacion)
+	h32 := h.MatrizTo32()
+	strinH:=h32.ToString()
+	if imprimir {fmt.Println(strinH)}
+
+	fmt.Println("G:")
+	g:=g(codificacion)
+	g32:= g.MatrizTo32()
+	strinG:=g32.ToString()
+	if imprimir {fmt.Println(strinG)}
+	
+	fmt.Println("R:")
+	r:=r(codificacion)
+	r32 := r.MatrizTo32()
+	strinR:=r32.ToString()
 	if imprimir {fmt.Println(strinR)}
 
 	
@@ -163,7 +258,7 @@ func g(codificacion int) *Matriz {
                 }
             }
         }
-        return aux;
+        return aux
 }
 //r Funcion que crea la matriz decodificadora 
 func r(codificacion int) *Matriz {
