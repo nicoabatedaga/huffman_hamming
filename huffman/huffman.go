@@ -11,11 +11,14 @@ import (
 )
 
 var (
-	mapita                    map[string]string
-	mapitaInvertido           map[string]string
-	stringParaMatchearLectura string
-	counterBits               int64
-	counterReadBits           int64
+	mapita                      map[string]string
+	mapitaInvertido             map[string]string
+	stringParaMatchearLectura   string
+	counterBits                 int64
+	counterReadBits             int64
+	tamanioArchivoCodificado    int64
+	tamanioArchivo              int64
+	tamanioArchivoDescomprimido int64
 )
 
 func manejoError(err error) {
@@ -26,10 +29,13 @@ func manejoError(err error) {
 
 func Huffman() {
 	fmt.Println(" - empiezo el huffman - ")
-	nombreArchivo := "./archivo"
+	nombreArchivo := "./archivoNuevo"
 	nombreArchivoComprimido := Comprimir(nombreArchivo)
 	fmt.Println(fmt.Sprintf("El archivo comprimido se llama: %v", nombreArchivoComprimido))
 	leoArchivoEnBytes(nombreArchivoComprimido)
+	if tamanioArchivo != tamanioArchivoCodificado {
+		panic(fmt.Sprintf("Los tamaños no coinciden %v - %v", tamanioArchivo, tamanioArchivoDescomprimido))
+	}
 	return
 }
 
@@ -51,17 +57,27 @@ func recorroArchivoYCuento(nfr string) map[string]int {
 	defer archivoLectura.Close()
 	manejoError(err)
 	fileInfo, _ := archivoLectura.Stat()
+	tamanioArchivo = fileInfo.Size()
 	fmt.Println(fmt.Sprintf("file size: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
 	scanner := bufio.NewScanner(archivoLectura)
+
+	// reader := bufio.NewReader(archivoLectura)
+	// linea, err := reader.ReadString('\n')
+
 	ocurrencias := map[string]int{}
-	for scanner.Scan() {
+	scan := scanner.Scan()
+	for scan {
 		caracteresDeLinea := strings.Split(scanner.Text(), "")
+		// fmt.Println(fmt.Sprintf("caracteres de linea:%v", caracteresDeLinea))
 		for i := 0; i < len(caracteresDeLinea); i++ {
 			// fmt.Println(fmt.Sprintf("Sumo: %v", caracteresDeLinea[i]))
 			ocurrencias[caracteresDeLinea[i]]++
 		}
-		// fmt.Println(fmt.Sprintf("Sumo: newLine"))
-		ocurrencias["newLine"]++ //Sumo el salto de linea
+		scan = scanner.Scan()
+		if scan {
+			// fmt.Println(fmt.Sprintf("Sumo: newLine"))
+			ocurrencias["newLine"]++ //Sumo el salto de linea
+		}
 	}
 	// fmt.Println(fmt.Sprintf("Resto: newLine"))
 	// ocurrencias["newLine"]-- //Saco el enter de sobra si es que no hay otra linea
@@ -235,11 +251,11 @@ func recorroArchivoYEscriboArchivoCodificado(nfr, nfw string) {
 	iterba := 0
 
 	for scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			fmt.Println("error", err)
+		}
 		// spliteo en todos los caracteres de la linea
 		caracteresDeLinea := strings.Split(scanner.Text(), "")
-		// -----------------------------------------------
-		// VER PORQUE ESTOY METIENDO UN ENTER SI AL ULTIMO NO TIENE ENTER
-		// -----------------------------------------------
 		caracteresDeLinea = append(caracteresDeLinea, "newLine")
 		// fmt.Println(fmt.Sprintf("Linea: %v", caracteresDeLinea))
 		// itero por cada caracter
@@ -265,21 +281,25 @@ func recorroArchivoYEscriboArchivoCodificado(nfr, nfw string) {
 					ba.Fill(0)
 					iterba = 0
 				}
+				if len(bufferEscritura) >= 1024 {
+					meterEnArchivoBinario(*writer, bufferEscritura)
+					bufferEscritura = []byte{}
+				}
 			}
 		}
 	}
-	// -----------------------------------------------
-	// VER PORQUE ESTOY METIENDO AL ULTIMO 0's QUE NO VAN
-	// -----------------------------------------------
 	bufferEscritura = append(bufferEscritura, ba.GetData()...)
 	meterEnArchivoBinario(*writer, bufferEscritura)
 	fileInfo, _ := archivoEscritura.Stat()
+
+	tamanioArchivoCodificado = fileInfo.Size()
 	fmt.Println(fmt.Sprintf("file size: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
 }
 
 func meterEnArchivoBinario(writer bufio.Writer, byteArray []byte) {
 	// fmt.Println(fmt.Sprintf("Guardo en el archivo: %v", ba.String()))
 	_, err := writer.Write(byteArray)
+	// fmt.Println("imprimi ", i, "bytes en el archivo")
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error Write!!!. %v", err))
 	}
@@ -312,10 +332,12 @@ func leoArchivoEnBytes(nombreArchivo string) {
 	scanner := bufio.NewScanner(archivoLecturaBytes)
 	stringParaMatchearLectura = ""
 	for scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			fmt.Println("error", err)
+		}
 		x := scanner.Bytes()
 		// fmt.Println(fmt.Sprintf("scanner.Bytes():%v", x))
 		for i := range x {
-			/*ACA METER UN BYTE to BITARRAY*/
 			s := fmt.Sprintf("%b", x[i])
 			// fmt.Println(fmt.Sprintf("s:%v", s))
 			for it := len(s); it < 8; it++ {
@@ -336,11 +358,15 @@ func leoArchivoEnBytes(nombreArchivo string) {
 					stringParaMatchearLectura = ""
 				}
 			}
-			// fmt.Println(fmt.Sprintf("%s", s))
+			if len(bufferEscritura) >= 1024 {
+				meterEnArchivo(*writer, bufferEscritura)
+				bufferEscritura = []string{}
+			}
 		}
 	}
 	meterEnArchivo(*writer, bufferEscritura)
 	fileInfo, _ := archivoEscritura.Stat()
+	tamanioArchivoDescomprimido = fileInfo.Size()
 	fmt.Println(fmt.Sprintf("file size: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
 }
 
@@ -371,8 +397,10 @@ func meterEnArchivo(writer bufio.Writer, as []string) {
 	// )
 	for _, s := range as {
 		if s == "newLine" {
+			// fmt.Println("")
 			writer.WriteString("\n")
 		} else {
+			// fmt.Printf("%s", s)
 			writer.WriteString(s)
 		}
 		// bar.Increment()
