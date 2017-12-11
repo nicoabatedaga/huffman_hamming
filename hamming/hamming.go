@@ -14,9 +14,9 @@ func Hamming() {
 	start := time.Now()
 	fmt.Println("-Hamming-")
 
-	//codificacion := 522
+	codificacion := 522
 	//codificacion = 1035
-	codificacion := 2060
+	//codificacion := 2060
 
 	fmt.Println(fmt.Sprintf("Codificacion: %v, Bits Paridad: %v, Bits Información: %v",
 		codificacion,
@@ -24,7 +24,9 @@ func Hamming() {
 		bitsInformacion(codificacion)))
 
 	//pruebaHGR(codificacion)
-	Proteger("prueba.txt", "prueba.ham", 522)
+	Proteger("./prueba.txt", "./prueba.ham", 522)
+	
+	Desproteger("./prueba.ham", "./pruebaDesprotegido.txt")
 	elapsed := time.Since(start)
 	fmt.Println(fmt.Sprintf("Estuvo ejecutando: %s", elapsed))
 	return
@@ -191,38 +193,101 @@ func Codificar(operando *Matriz) (bool, Matriz) {
 }
 
 //Proteger funcion que toma de entrada el path de un archivo y lo codifica segun un valor de entrada
-func Proteger(url string, salida string, codificacion int) bool {
-	if _, err := os.Stat(url); os.IsNotExist(err) {
-		return false
-	}
+func Proteger(url string, salida string, codificacion int)  {
 	file, err := os.Open(url)
 	manejoError(err)
 	defer file.Close()
-
+	os.Create(salida)
 	fileO, err := os.OpenFile(salida, os.O_WRONLY, 0666)
 	manejoError(err)
 	defer fileO.Close()
 
 	bufferReader := bufio.NewReader(file)
+	bufferWriter := bufio.NewWriter(fileO)
 
 	buf := make([]byte, bitsInformacion(codificacion)/8)
-	h := h(codificacion)
+	g := g(codificacion)
 
 	byteLeidos, err := bufferReader.Read(buf)
-
-	manejoError(err)
-	for byteLeidos > 0 {
+	manejoError(err) 
+	for byteLeidos > 0 { 
+		fmt.Println("- ",byteLeidos)
 		auxMatriz := MatrizColumna(ByteToBool(buf))
-		b, m := h.Multiplicar(auxMatriz)
-		if !b {
-			fileO.Write(m.ToString())
+		auxMatriz.ToFile("auxMatriz.ham") 
+		b, m := g.Multiplicar(auxMatriz) 
+		g.ToFile("g.ham")
+		m.ToFile("m.ham") 
+		if !b { 
+			numB,err :=bufferWriter.Write(m.ToByte())
+			if numB == 0{
+				fmt.Println("No se escribio nada")
+			} 
+			fmt.Println("- ",numB)
+			manejoError(err)
 		}
-
+		if byteLeidos < len(buf){
+			//Esto lo deberia almacenar de alguna manera? o no importa? !!
+			break
+		}
+		byteLeidos, err = bufferReader.Read(buf)
+		
+		if err != nil {
+			fmt.Println("Error en leer")
+			fmt.Println(byteLeidos)				
+		}
+		manejoError(err)
 	}
-
-	h.ToFile("h.bin")
-	return true
 }
+
+//Desproteger le doy un url de entrada y uno de salida
+func Desproteger( url string,salida string){
+	codificacion := 522
+	file, err := os.Open(url)
+	manejoError(err)
+	defer file.Close()
+	os.Create(salida)
+	fileO, err := os.OpenFile(salida, os.O_WRONLY, 0666)
+	manejoError(err)
+	defer fileO.Close()
+
+	bufferReader := bufio.NewReader(file)
+	bufferWriter := bufio.NewWriter(fileO)
+
+	// 522 y 520 != no concuerda,. esta hardcodiado la codificacion
+	buf := make([]byte, codificacion/8+1)
+	r := r(codificacion+6)
+
+	byteLeidos, err := bufferReader.Read(buf)
+	manejoError(err) 
+	for byteLeidos > 0 { 
+		fmt.Println("- ",byteLeidos)
+		auxMatriz := MatrizColumna(ByteToBool(buf))
+		auxMatriz.ToFile("auxMatriz.ham") 
+		b, m := r.Multiplicar(auxMatriz) 
+		r.ToFile("r.ham")
+		m.ToFile("m.ham") 
+		if !b { 
+			numB,err :=bufferWriter.Write(m.ToByte())
+			if numB == 0{
+				fmt.Println("No se escribio nada")
+			} 
+			fmt.Println("- ",numB)
+			manejoError(err)
+		}
+		if byteLeidos < len(buf){
+			//Esto lo deberia almacenar de alguna manera? o no importa? !!
+			break
+		}
+		byteLeidos, err = bufferReader.Read(buf)
+		
+		if err != nil {
+			fmt.Println("Error en leer")
+			fmt.Println(byteLeidos)				
+		}
+		manejoError(err)
+	}
+}
+
 
 //TieneError verifica si tiene error una matriz, y devuelve la posicion del mismo.
 func TieneError(operando *Matriz) (bool, int) {

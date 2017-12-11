@@ -16,9 +16,36 @@ func (operando *Matriz) ToByte() []byte {
 	ancho := len(operando.datos)
 	alto := len(operando.datos[0])
 	auxB := make([]byte, ancho*alto/8)
-	for indice, aux := range auxB {
-		//QUEDEACA
+	for indice, _ := range auxB { 
+		var auxByte byte 
+		if operando.datos[indice*8][0 ]{ 
+			auxByte = auxByte | 1
+
+		}
+		if operando.datos[indice*8 +1][0]{
+			auxByte= auxByte |2
+		}
+		if operando.datos[indice*8 +2][0]{
+			auxByte = auxByte | 4
+		}
+		if operando.datos[indice*8 +3][0]{
+			auxByte = auxByte | 8
+		}
+		if operando.datos[indice*8 +4][0]{
+			auxByte = auxByte | 16
+		}
+		if operando.datos[indice*8 + 5][0]{
+			auxByte = auxByte | 32
+		}
+		if operando.datos[indice*8 + 6][0]{
+			auxByte = auxByte | 64
+		}
+		if operando.datos[indice*8 +7][0]{
+			auxByte = auxByte | 128
+		}
+		auxB[indice] = auxByte
 	}
+	return auxB
 }
 
 //ToString funcion que convierte una matriz en un string para imprimir en consola
@@ -68,7 +95,7 @@ func (operando *Matriz) ToStringConInfo() string {
 }
 
 //Multiplicar Funcion que multiplica dos matrices y devuelve sus resultado
-func (operando *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
+func (operando *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) { 
 	if operando.datos != nil || operando.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {
 		nO := len(operando.datos[0])
 		mEn := len(mE.datos)
@@ -83,7 +110,7 @@ func (operando *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
 						aux.datos[k][j] = ((operando.datos[k][i] && mE.datos[i][j]) != aux.datos[k][j])
 					}
 				}
-			}
+			} 
 			return false, *aux
 		}
 
