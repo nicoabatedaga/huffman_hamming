@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -24,7 +25,12 @@ func Hamming() {
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
 
-	Proteger("./prueba.txt", "./prueba.ham", 522)
+	Proteger("./prueba.txt", "./prueba.ham", codificacion)
+	error, b, l := TieneErrores("./prueba.ham")
+	fmt.Println(error, b, l)
+	//IntroducirError("./alicia.ham", "./aliciaConError.ham")
+	//error, b, l = TieneErrores("./alicia.ham")
+	//fmt.Println(error, b, l)
 	Desproteger("./prueba.ham", "./pruebaDesprotegido.txt")
 
 	elapsed := time.Since(start)
@@ -103,7 +109,7 @@ func bitsParidad(ent int) int {
 }
 
 //h metodo que devuelve la matriz que se multiplica para codificar una entrada
-func h(codificacion int) Matriz {
+func h(codificacion int) *Matriz {
 	alto := codificacion
 	ancho := bitsParidad(codificacion)
 	aux := NuevaMatriz(ancho, alto)
@@ -122,7 +128,7 @@ func h(codificacion int) Matriz {
 			}
 		}
 	}
-	return *aux
+	return aux
 }
 
 //g Funcion que crea la matriz generadora
@@ -193,6 +199,7 @@ func Proteger(url string, salida string, codificacion int) {
 	fileO.Close()
 	fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
 	manejoError(err)
+	defer fileO.Close()
 
 	bufferReader := bufio.NewReader(file)
 	bufferWriter := bufio.NewWriter(fileO)
@@ -206,14 +213,10 @@ func Proteger(url string, salida string, codificacion int) {
 	}
 	contadorBloques := 0
 	for byteLeidos > 0 {
-		fmt.Println(contadorBloques, ": R: ", byteLeidos)
-		fmt.Println("Leido: ", buf)
 		auxMatriz := MatrizColumna(ByteToBool(buf))
-		auxMatriz.ToFile("PauxMatriz.ham")
 		b, m := g.Multiplicar(auxMatriz)
 		if !b {
 			contadorBloques++
-			m.ToFile("Pm.ham")
 			bin := m.ToByte()
 			if byteLeidos+1 < codificacion/8 {
 				marcador := byteLeidos + bitsParidad(byteLeidos*8)/8
@@ -222,12 +225,13 @@ func Proteger(url string, salida string, codificacion int) {
 				}
 				bin = bin[:marcador]
 			}
-			if len(bin) > bufferWriter.Available() {
+			if len(bin)+1 > bufferWriter.Available() {
 				bufferWriter.Flush()
 			}
 			numB, err := bufferWriter.Write(bin)
-			fmt.Println(contadorBloques, ": W ", numB)
-			fmt.Println("Escrito: ", bin)
+			if numB == 0 {
+				fmt.Println(contadorBloques, ":No se escribio nada")
+			}
 			manejoError(err)
 		}
 		if byteLeidos < len(buf) {
@@ -239,18 +243,18 @@ func Proteger(url string, salida string, codificacion int) {
 		}
 	}
 	bufferWriter.Flush()
-	fileO.Close()
-	fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
+
+	salida = salida + "info"
+
+	ocultarFile(salida, false)
+	fileOinfo, err := os.Create(salida)
 	manejoError(err)
-	defer fileO.Close()
-	fileO.WriteString(fmt.Sprintf("%v\n%v\n%v\n", codificacion, contadorBloques, byteLeidos)) /*
-		stats, err := file.Stat()
-		manejoError(err)
-		statsO, err := file.Stat()
-		manejoError(err)*/
-	/*
-		fmt.Println(fmt.Sprintf("-Archivo de entrada %s, %v bits", url, stats.Size()))
-		fmt.Println(fmt.Sprintf("-Archivo de salida %s, %v bits\n", salida, statsO.Size()))*/
+	fileOinfo.Close()
+	fileOinfo, err = os.OpenFile(salida, os.O_WRONLY, 0666)
+	manejoError(err)
+	fileOinfo.WriteString(fmt.Sprintf("%v\n%v\n%v\n", codificacion, contadorBloques, byteLeidos))
+	fileOinfo.Close()
+	ocultarFile(salida, true)
 }
 
 //Desproteger le doy un url de entrada y uno de salida
@@ -259,6 +263,9 @@ func Desproteger(url string, salida string) {
 	file, err := os.Open(url)
 	manejoError(err)
 	defer file.Close()
+	fileinfo, err := os.Open(url + "info")
+	manejoError(err)
+	defer fileinfo.Close()
 	fileO, err := os.Create(salida)
 	manejoError(err)
 	fileO.Close()
@@ -266,21 +273,23 @@ func Desproteger(url string, salida string) {
 	manejoError(err)
 	defer fileO.Close()
 
+	bufferReaderInfo := bufio.NewReader(fileinfo)
 	bufferReader := bufio.NewReader(file)
 	bufferWriter := bufio.NewWriter(fileO)
 
-	line, err := bufferReader.ReadString('\n')
+	line, err := bufferReaderInfo.ReadString('\n')
 	manejoError(err)
 	codificacion, err := strconv.Atoi(line[:len(line)-1])
 	manejoError(err)
-	line, err = bufferReader.ReadString('\n')
+	line, err = bufferReaderInfo.ReadString('\n')
 	manejoError(err)
 	bloqueCodificados, err := strconv.Atoi(line[:len(line)-1])
 	manejoError(err)
-	line, err = bufferReader.ReadString('\n')
+	line, err = bufferReaderInfo.ReadString('\n')
 	manejoError(err)
 	bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
 	manejoError(err)
+
 	fmt.Println("\nDesprotección Archivo:", codificacion, bloqueCodificados, bitsUltimo)
 
 	buf := make([]byte, (codificacion)/8+1)
@@ -291,51 +300,239 @@ func Desproteger(url string, salida string) {
 	if byteLeidos != 0 {
 		manejoError(err)
 	}
-	fmt.Println("Leido: ", buf)
 	contadorBloques := 0
-	for byteLeidos > 0 && bloqueCodificados != 0 {
+	for bloqueCodificados != 0 {
 		bloqueCodificados--
-		fmt.Println(bloqueCodificados, ": R: ", byteLeidos)
 		auxBool := (ByteToBool(buf))
 		//[:bitesInfo]
 		auxMatriz := MatrizColumna(auxBool)
-		auxMatriz.ToFile("DauxMatriz.ham")
 		b, m := r.Multiplicar(auxMatriz)
 		if !b {
 			contadorBloques++
-			m.ToFile("Dm.ham")
 			bin := m.ToByte()
 			if bloqueCodificados == 0 {
 				bin = bin[:bitsUltimo]
 			} else {
 				bin = bin[:bitesInfo/8]
 			}
-			if len(bin) > bufferWriter.Available() {
+			numB, err := bufferWriter.Write(bin)
+
+			if bufferWriter.Available() < len(bin) {
 				bufferWriter.Flush()
 			}
-			numB, err := bufferWriter.Write(bin)
-			fmt.Println(bin)
-			fmt.Println(bloqueCodificados, ": W ", numB)
+			if numB == 0 {
+				fmt.Println(contadorBloques, ":No se escribio nada")
+			}
 			manejoError(err)
-		}
-		if byteLeidos < len(buf) {
-			break
 		}
 		byteLeidos, err = bufferReader.Read(buf)
 		if byteLeidos != 0 {
 			manejoError(err)
 		}
+		if byteLeidos < len(buf) {
+			//Se agrego este segmento, para evitar una lectura menor que el buff., se continua leyendo hasta completarlo
+			buf2 := make([]byte, (codificacion)/8+1-byteLeidos)
+			byteLeidos2, err := bufferReader.Read(buf2)
+			if byteLeidos2 != 0 {
+				manejoError(err)
+			}
+			buf = buf[:byteLeidos]
+			buf = append(buf, buf2...)
+		}
 	}
 	bufferWriter.Flush()
-	/*
-		stats, err := file.Stat()
+}
+
+//IntroducirError toma como parametros un archivo .ham y devuelve un .ham con un erro introducido
+func IntroducirError(url string, salida string) {
+	error, b, l := TieneErrores(url)
+	if error {
+		fmt.Println("El archivo ya contiene un error en el bloque", b, " en ", l)
+	} else {
+		file, err := os.Open(url)
 		manejoError(err)
-		statsO, err := file.Stat()
+		defer file.Close()
+		fileinfo, err := os.Open(url + "info")
 		manejoError(err)
-	*/
-	/*
-		fmt.Println(fmt.Sprintf("-in %s, %v bits", url, stats.Size()))
-		fmt.Println(fmt.Sprintf("-out de salida %s, %v bits", salida, statsO.Size()))*/
+		defer fileinfo.Close()
+		fileO, err := os.Create(salida)
+		manejoError(err)
+		fileO.Close()
+		fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
+		manejoError(err)
+		defer fileO.Close()
+
+		bufferReaderInfo := bufio.NewReader(fileinfo)
+		bufferReader := bufio.NewReader(file)
+		bufferWriter := bufio.NewWriter(fileO)
+
+		line, err := bufferReaderInfo.ReadString('\n')
+		manejoError(err)
+		codificacion, err := strconv.Atoi(line[:len(line)-1])
+		manejoError(err)
+		line, err = bufferReaderInfo.ReadString('\n')
+		manejoError(err)
+		bloqueCodificados, err := strconv.Atoi(line[:len(line)-1])
+		manejoError(err)
+		line, err = bufferReaderInfo.ReadString('\n')
+		manejoError(err)
+		bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
+		manejoError(err)
+
+		fmt.Println("\nIntroducción error:")
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		bloqueError := r.Intn(bloqueCodificados)
+		fmt.Println("Bloque Error:", bloqueError)
+
+		buf := make([]byte, (codificacion)/8+1)
+		bitesInfo := bitsInformacion(codificacion)
+
+		byteLeidos, err := bufferReader.Read(buf)
+		if byteLeidos != 0 {
+			manejoError(err)
+		}
+		contadorBloques := 0
+		for bloqueCodificados != 0 {
+			bloqueCodificados--
+			auxBool := (ByteToBool(buf))
+			//[:bitesInfo]
+			auxMatriz := MatrizColumna(auxBool)
+			if contadorBloques == bloqueError {
+				n := len(auxMatriz.datos)
+				m := len(auxMatriz.datos[0])
+				i := r.Intn(n)
+				j := r.Intn(m)
+				fmt.Println("Posicion error:", i)
+				auxMatriz.datos[i][j] = !auxMatriz.datos[i][j]
+			}
+			contadorBloques++
+			bin := auxMatriz.ToByte()
+			if bloqueCodificados == 0 {
+				bin = bin[:bitsUltimo]
+			} else {
+				bin = bin[:bitesInfo/8]
+			}
+			numB, err := bufferWriter.Write(bin)
+
+			if bufferWriter.Available() < len(bin) {
+				bufferWriter.Flush()
+			}
+			if numB == 0 {
+				fmt.Println(contadorBloques, ":No se escribio nada")
+			}
+			manejoError(err)
+			byteLeidos, err = bufferReader.Read(buf)
+			if byteLeidos != 0 {
+				manejoError(err)
+			}
+			if byteLeidos < len(buf) {
+				//Se agrego este segmento, para evitar una lectura menor que el buff., se continua leyendo hasta completarlo
+				buf2 := make([]byte, (codificacion)/8+1-byteLeidos)
+				byteLeidos2, err := bufferReader.Read(buf2)
+				if byteLeidos2 != 0 {
+					manejoError(err)
+				}
+				buf = buf[:byteLeidos]
+				buf = append(buf, buf2...)
+			}
+		}
+		bufferWriter.Flush()
+	}
+}
+
+//TieneErrores toma como parametros un archivo .ham  y verifica si tiene error
+func TieneErrores(url string) (bool, int, int) {
+	file, err := os.Open(url)
+	manejoError(err)
+	defer file.Close()
+	fileinfo, err := os.Open(url + "info")
+	manejoError(err)
+	defer fileinfo.Close()
+
+	bufferReaderInfo := bufio.NewReader(fileinfo)
+	bufferReader := bufio.NewReader(file)
+
+	line, err := bufferReaderInfo.ReadString('\n')
+	manejoError(err)
+	codificacion, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+	line, err = bufferReaderInfo.ReadString('\n')
+	manejoError(err)
+	bloqueCodificados, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+	line, err = bufferReaderInfo.ReadString('\n')
+	manejoError(err)
+	bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+
+	fmt.Println("\nControlo error:")
+
+	buf := make([]byte, (codificacion)/8+1)
+	hM := h(len(buf) * 8)
+
+	byteLeidos, err := bufferReader.Read(buf)
+	if byteLeidos != 0 {
+		manejoError(err)
+	}
+	contadorBloques := 0
+	for bloqueCodificados != 0 {
+		bloqueCodificados--
+		auxBool := (ByteToBool(buf))
+		if bloqueCodificados == 0 {
+			marcardor := bitsUltimo * 8
+			auxBool = auxBool[:marcardor]
+			hM = h(marcardor)
+			fmt.Println("MARCADOR: ", marcardor, bitsParidad(marcardor), len(auxBool))
+		}
+		auxMatriz := MatrizColumna(auxBool)
+		b, sindrome := hM.Multiplicar(auxMatriz)
+		if !b {
+			contadorBloques++
+			if sindrome.TieneUnos() {
+				fmt.Println(sindrome.ToString())
+				auxInt := 0
+				for i, fila := range sindrome.datos {
+					mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
+					for _, b := range fila {
+						if b {
+							auxInt = auxInt | mascara[i]
+						}
+					}
+				}
+				auxInt = auxInt - 1
+				fmt.Println("Hay error en el bloque: ", contadorBloques, " en el bit ", auxInt)
+				return true, contadorBloques, auxInt
+			}
+		}
+		byteLeidos, err = bufferReader.Read(buf)
+		if byteLeidos != 0 {
+			manejoError(err)
+		}
+		if byteLeidos < len(buf) {
+			//Se agrego este segmento, para evitar una lectura menor que el buff., se continua leyendo hasta completarlo
+			buf2 := make([]byte, (codificacion)/8+1-byteLeidos)
+			byteLeidos2, err := bufferReader.Read(buf2)
+			if byteLeidos2 != 0 {
+				manejoError(err)
+			}
+			buf = buf[:byteLeidos]
+			buf = append(buf, buf2...)
+		}
+	}
+	return false, -1, -1
+}
+
+func ocultarFile(url string, ocultar bool) {
+	if _, err := os.Stat(url); err == nil {
+		nameptr, err := syscall.UTF16PtrFromString(url)
+		manejoError(err)
+		if ocultar {
+			err = syscall.SetFileAttributes(nameptr, syscall.FILE_ATTRIBUTE_HIDDEN)
+		} else {
+			err = syscall.SetFileAttributes(nameptr, syscall.FILE_ATTRIBUTE_NORMAL)
+		}
+		manejoError(err)
+	}
 }
 
 //TieneError verifica si tiene error una matriz, y devuelve la posicion del mismo.
