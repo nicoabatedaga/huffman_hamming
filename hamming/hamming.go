@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -23,12 +24,12 @@ func Hamming() {
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
 
-	//pruebaHGR(codificacion)
 	Proteger("./prueba.txt", "./prueba.ham", 522)
-	
 	Desproteger("./prueba.ham", "./pruebaDesprotegido.txt")
+
 	elapsed := time.Since(start)
 	fmt.Println(fmt.Sprintf("Estuvo ejecutando: %s", elapsed))
+
 	return
 }
 
@@ -181,26 +182,17 @@ func r(codificacion int) *Matriz {
 	return aux
 }
 
-//Codificar  Cifra el archivo de entrada
-func Codificar(operando *Matriz) (bool, Matriz) {
-	cod := len(operando.datos)
-	h := h(cod)
-	error, codificada := h.Multiplicar(operando)
-	if error {
-		return true, *operando
-	}
-	return false, codificada
-}
-
 //Proteger funcion que toma de entrada el path de un archivo y lo codifica segun un valor de entrada
-func Proteger(url string, salida string, codificacion int)  {
+func Proteger(url string, salida string, codificacion int) {
+	fmt.Println("\nProtección Archivo:")
 	file, err := os.Open(url)
 	manejoError(err)
 	defer file.Close()
-	os.Create(salida)
-	fileO, err := os.OpenFile(salida, os.O_WRONLY, 0666)
+	fileO, err := os.Create(salida)
 	manejoError(err)
-	defer fileO.Close()
+	fileO.Close()
+	fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
+	manejoError(err)
 
 	bufferReader := bufio.NewReader(file)
 	bufferWriter := bufio.NewWriter(fileO)
@@ -209,85 +201,142 @@ func Proteger(url string, salida string, codificacion int)  {
 	g := g(codificacion)
 
 	byteLeidos, err := bufferReader.Read(buf)
-	manejoError(err) 
-	for byteLeidos > 0 { 
-		fmt.Println("- ",byteLeidos)
+	if byteLeidos != 0 {
+		manejoError(err)
+	}
+	contadorBloques := 0
+	for byteLeidos > 0 {
+		fmt.Println(contadorBloques, ": R: ", byteLeidos)
+		fmt.Println("Leido: ", buf)
 		auxMatriz := MatrizColumna(ByteToBool(buf))
-		auxMatriz.ToFile("auxMatriz.ham") 
-		b, m := g.Multiplicar(auxMatriz) 
-		g.ToFile("g.ham")
-		m.ToFile("m.ham") 
-		if !b { 
-			numB,err :=bufferWriter.Write(m.ToByte())
-			if numB == 0{
-				fmt.Println("No se escribio nada")
-			} 
-			fmt.Println("- ",numB)
+		auxMatriz.ToFile("PauxMatriz.ham")
+		b, m := g.Multiplicar(auxMatriz)
+		if !b {
+			contadorBloques++
+			m.ToFile("Pm.ham")
+			bin := m.ToByte()
+			if byteLeidos+1 < codificacion/8 {
+				marcador := byteLeidos + bitsParidad(byteLeidos*8)/8
+				if bitsParidad(byteLeidos*8)%8 != 0 {
+					marcador++
+				}
+				bin = bin[:marcador]
+			}
+			if len(bin) > bufferWriter.Available() {
+				bufferWriter.Flush()
+			}
+			numB, err := bufferWriter.Write(bin)
+			fmt.Println(contadorBloques, ": W ", numB)
+			fmt.Println("Escrito: ", bin)
 			manejoError(err)
 		}
-		if byteLeidos < len(buf){
-			//Esto lo deberia almacenar de alguna manera? o no importa? !!
+		if byteLeidos < len(buf) {
 			break
 		}
 		byteLeidos, err = bufferReader.Read(buf)
-		
-		if err != nil {
-			fmt.Println("Error en leer")
-			fmt.Println(byteLeidos)				
+		if byteLeidos != 0 {
+			manejoError(err)
 		}
-		manejoError(err)
 	}
+	bufferWriter.Flush()
+	fileO.Close()
+	fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
+	manejoError(err)
+	defer fileO.Close()
+	fileO.WriteString(fmt.Sprintf("%v\n%v\n%v\n", codificacion, contadorBloques, byteLeidos)) /*
+		stats, err := file.Stat()
+		manejoError(err)
+		statsO, err := file.Stat()
+		manejoError(err)*/
+	/*
+		fmt.Println(fmt.Sprintf("-Archivo de entrada %s, %v bits", url, stats.Size()))
+		fmt.Println(fmt.Sprintf("-Archivo de salida %s, %v bits\n", salida, statsO.Size()))*/
 }
 
 //Desproteger le doy un url de entrada y uno de salida
-func Desproteger( url string,salida string){
-	codificacion := 522
+func Desproteger(url string, salida string) {
+
 	file, err := os.Open(url)
 	manejoError(err)
 	defer file.Close()
-	os.Create(salida)
-	fileO, err := os.OpenFile(salida, os.O_WRONLY, 0666)
+	fileO, err := os.Create(salida)
+	manejoError(err)
+	fileO.Close()
+	fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
 	manejoError(err)
 	defer fileO.Close()
 
 	bufferReader := bufio.NewReader(file)
 	bufferWriter := bufio.NewWriter(fileO)
 
-	// 522 y 520 != no concuerda,. esta hardcodiado la codificacion
-	buf := make([]byte, codificacion/8+1)
-	r := r(codificacion+6)
+	line, err := bufferReader.ReadString('\n')
+	manejoError(err)
+	codificacion, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+	line, err = bufferReader.ReadString('\n')
+	manejoError(err)
+	bloqueCodificados, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+	line, err = bufferReader.ReadString('\n')
+	manejoError(err)
+	bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+	fmt.Println("\nDesprotección Archivo:", codificacion, bloqueCodificados, bitsUltimo)
+
+	buf := make([]byte, (codificacion)/8+1)
+	bitesInfo := bitsInformacion(codificacion)
+	r := r(len(buf) * 8)
 
 	byteLeidos, err := bufferReader.Read(buf)
-	manejoError(err) 
-	for byteLeidos > 0 { 
-		fmt.Println("- ",byteLeidos)
-		auxMatriz := MatrizColumna(ByteToBool(buf))
-		auxMatriz.ToFile("auxMatriz.ham") 
-		b, m := r.Multiplicar(auxMatriz) 
-		r.ToFile("r.ham")
-		m.ToFile("m.ham") 
-		if !b { 
-			numB,err :=bufferWriter.Write(m.ToByte())
-			if numB == 0{
-				fmt.Println("No se escribio nada")
-			} 
-			fmt.Println("- ",numB)
+	if byteLeidos != 0 {
+		manejoError(err)
+	}
+	fmt.Println("Leido: ", buf)
+	contadorBloques := 0
+	for byteLeidos > 0 && bloqueCodificados != 0 {
+		bloqueCodificados--
+		fmt.Println(bloqueCodificados, ": R: ", byteLeidos)
+		auxBool := (ByteToBool(buf))
+		//[:bitesInfo]
+		auxMatriz := MatrizColumna(auxBool)
+		auxMatriz.ToFile("DauxMatriz.ham")
+		b, m := r.Multiplicar(auxMatriz)
+		if !b {
+			contadorBloques++
+			m.ToFile("Dm.ham")
+			bin := m.ToByte()
+			if bloqueCodificados == 0 {
+				bin = bin[:bitsUltimo]
+			} else {
+				bin = bin[:bitesInfo/8]
+			}
+			if len(bin) > bufferWriter.Available() {
+				bufferWriter.Flush()
+			}
+			numB, err := bufferWriter.Write(bin)
+			fmt.Println(bin)
+			fmt.Println(bloqueCodificados, ": W ", numB)
 			manejoError(err)
 		}
-		if byteLeidos < len(buf){
-			//Esto lo deberia almacenar de alguna manera? o no importa? !!
+		if byteLeidos < len(buf) {
 			break
 		}
 		byteLeidos, err = bufferReader.Read(buf)
-		
-		if err != nil {
-			fmt.Println("Error en leer")
-			fmt.Println(byteLeidos)				
+		if byteLeidos != 0 {
+			manejoError(err)
 		}
-		manejoError(err)
 	}
+	bufferWriter.Flush()
+	/*
+		stats, err := file.Stat()
+		manejoError(err)
+		statsO, err := file.Stat()
+		manejoError(err)
+	*/
+	/*
+		fmt.Println(fmt.Sprintf("-in %s, %v bits", url, stats.Size()))
+		fmt.Println(fmt.Sprintf("-out de salida %s, %v bits", salida, statsO.Size()))*/
 }
-
 
 //TieneError verifica si tiene error una matriz, y devuelve la posicion del mismo.
 func TieneError(operando *Matriz) (bool, int) {

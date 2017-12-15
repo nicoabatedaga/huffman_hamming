@@ -11,37 +11,24 @@ type Matriz struct {
 	datos [][]bool
 }
 
-//ToByte transforma una matriz en un arreglo de bytes
+//ToByte transforma una matriz en un arreglo de bytes (solo funciona para las matrices columna)
 func (operando *Matriz) ToByte() []byte {
 	ancho := len(operando.datos)
 	alto := len(operando.datos[0])
-	auxB := make([]byte, ancho*alto/8)
-	for indice, _ := range auxB { 
-		var auxByte byte 
-		if operando.datos[indice*8][0 ]{ 
-			auxByte = auxByte | 1
-
-		}
-		if operando.datos[indice*8 +1][0]{
-			auxByte= auxByte |2
-		}
-		if operando.datos[indice*8 +2][0]{
-			auxByte = auxByte | 4
-		}
-		if operando.datos[indice*8 +3][0]{
-			auxByte = auxByte | 8
-		}
-		if operando.datos[indice*8 +4][0]{
-			auxByte = auxByte | 16
-		}
-		if operando.datos[indice*8 + 5][0]{
-			auxByte = auxByte | 32
-		}
-		if operando.datos[indice*8 + 6][0]{
-			auxByte = auxByte | 64
-		}
-		if operando.datos[indice*8 +7][0]{
-			auxByte = auxByte | 128
+	tam := ancho * alto / 8
+	if (ancho*alto)%8 != 0 {
+		tam++
+	}
+	auxB := make([]byte, tam)
+	for indice := range auxB {
+		var auxByte byte
+		mascara := []byte{1, 2, 4, 8, 16, 32, 64, 128}
+		for i, n := range mascara {
+			if indice*8+i < ancho {
+				if operando.datos[indice*8+i][0] {
+					auxByte = auxByte | n
+				}
+			}
 		}
 		auxB[indice] = auxByte
 	}
@@ -95,7 +82,7 @@ func (operando *Matriz) ToStringConInfo() string {
 }
 
 //Multiplicar Funcion que multiplica dos matrices y devuelve sus resultado
-func (operando *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) { 
+func (operando *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
 	if operando.datos != nil || operando.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {
 		nO := len(operando.datos[0])
 		mEn := len(mE.datos)
@@ -110,7 +97,7 @@ func (operando *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
 						aux.datos[k][j] = ((operando.datos[k][i] && mE.datos[i][j]) != aux.datos[k][j])
 					}
 				}
-			} 
+			}
 			return false, *aux
 		}
 
@@ -162,6 +149,17 @@ func (entrada *Matriz) ToFile(url string) {
 		log.Fatal(err)
 	}
 	file.WriteString(entrada.ToString())
+	return
+}
+
+//ToFile graba una Matriz en un archivo binario
+func (entrada *Matriz) ToFileConInfo(url string) {
+	file, err := os.Create(url)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.WriteString(entrada.ToStringConInfo())
 	return
 }
 
