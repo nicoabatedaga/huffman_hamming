@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
-	"syscall"
 	"time"
 )
 
@@ -191,7 +190,7 @@ func Proteger(url string, info string, salida string, codificacion int) {
 			}
 			numB, err := bufferWriter.Write(bin)
 
-			fmt.Println("Bloque: ", contadorBloques, " Bytes Escritos: ", numB)
+			//fmt.Println("Bloque: ", contadorBloques, " Bytes Escritos: ", numB)
 			if numB == 0 {
 				fmt.Println(contadorBloques, ":No se escribio nada")
 			}
@@ -436,7 +435,7 @@ func TieneErrores(url string, info string) (bool, int, int) {
 	marcardor := bitsUltimo * 8
 	contadorBloques := 0
 	for bloqueCodificados != 0 {
-		fmt.Println("Bloque: ", bloqueCodificados, " Bytes Leidos: ", byteLeidos)
+		//fmt.Println("Bloque: ", bloqueCodificados, " Bytes Leidos: ", byteLeidos)
 		bloqueCodificados--
 		auxBool := (ByteToBool(buf))
 		if bloqueCodificados == 0 {
@@ -460,13 +459,10 @@ func TieneErrores(url string, info string) (bool, int, int) {
 				auxInt = auxInt - 1
 				if bloqueCodificados == 0 {
 					if auxInt < marcardor {
-						fmt.Println("Hay error en el bloque: ", contadorBloques, " en el bit ", auxInt)
-						fmt.Println("El error es: ", auxBool[auxInt])
 						return true, contadorBloques, auxInt
 
 					}
 				} else {
-					fmt.Println("El error es: ", auxBool[auxInt])
 					return true, contadorBloques, auxInt
 				}
 			}
@@ -488,19 +484,6 @@ func TieneErrores(url string, info string) (bool, int, int) {
 		contadorBloques++
 	}
 	return false, -1, -1
-}
-
-func ocultarFile(url string, ocultar bool) {
-	if _, err := os.Stat(url); err == nil {
-		nameptr, err := syscall.UTF16PtrFromString(url)
-		manejoError(err)
-		if ocultar {
-			err = syscall.SetFileAttributes(nameptr, syscall.FILE_ATTRIBUTE_HIDDEN)
-		} else {
-			err = syscall.SetFileAttributes(nameptr, syscall.FILE_ATTRIBUTE_NORMAL)
-		}
-		manejoError(err)
-	}
 }
 
 //AgregarError a un archivo, si devuelve true es porque agrego error, sino ya habia antes un error
