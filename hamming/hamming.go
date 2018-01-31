@@ -43,6 +43,13 @@ func manejoError(err error) {
 	}
 }
 
+func existeArchivo(pathArchivo string) bool {
+	if _, err := os.Stat(pathArchivo); err == nil {
+		return true
+	}
+	return false
+}
+
 func esPotenciaDeDos(ent int) bool {
 	return ((ent != 0) && ((ent & (ent - 1)) == 0))
 }
@@ -397,19 +404,11 @@ func IntroducirError(url string, info string, salida string) {
 		bufferWriter.Flush()
 	}
 }
-
-//TieneErrores toma como parametros un archivo .ham  y verifica si tiene error
-func TieneErrores(url string, info string) (bool, int, int) {
-	file, err := os.Open(url)
-	manejoError(err)
-	defer file.Close()
+func obtenerInformacion(info string)(int,int,int){
 	fileinfo, err := os.Open(info)
 	manejoError(err)
 	defer fileinfo.Close()
-
 	bufferReaderInfo := bufio.NewReader(fileinfo)
-	bufferReader := bufio.NewReader(file)
-
 	line, err := bufferReaderInfo.ReadString('\n')
 	manejoError(err)
 	codificacion, err := strconv.Atoi(line[:len(line)-1])
@@ -423,65 +422,76 @@ func TieneErrores(url string, info string) (bool, int, int) {
 	bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
 	manejoError(err)
 
-	fmt.Println("\nControlo error:")
-
-	buf := make([]byte, (codificacion)/8+1)
-	hM := h(len(buf) * 8)
-
-	byteLeidos, err := bufferReader.Read(buf)
-	if byteLeidos != 0 {
+	return codificacion,bloqueCodificados,bitsUltimo
+}
+//TieneErrores toma como parametros un archivo .ham  y verifica si tiene error
+func TieneErrores(url string, info string) (bool, int, int) {
+	if existeArchivo(url) && existeArchivo(info){
+		codificacion,bloqueCodificados, bitsUltimo := obtenerInformacion(info)
+		file, err := os.Open(url)
 		manejoError(err)
-	}
-	marcardor := bitsUltimo * 8
-	contadorBloques := 0
-	for bloqueCodificados != 0 {
-		//fmt.Println("Bloque: ", bloqueCodificados, " Bytes Leidos: ", byteLeidos)
-		bloqueCodificados--
-		auxBool := (ByteToBool(buf))
-		if bloqueCodificados == 0 {
-			auxBool = auxBool[:marcardor]
-			hM = h(marcardor)
-		}
-		auxMatriz := MatrizColumna(auxBool)
-		b, sindrome := hM.Multiplicar(auxMatriz)
-		if !b {
-			if sindrome.TieneUnos() {
-				fmt.Println("Sindrome: [", sindrome.ToString(), "]")
-				auxInt := 0
-				for i, fila := range sindrome.datos {
-					mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
-					for _, b := range fila {
-						if b {
-							auxInt = auxInt | mascara[i]
-						}
-					}
-				}
-				auxInt = auxInt - 1
-				if bloqueCodificados == 0 {
-					if auxInt < marcardor {
-						return true, contadorBloques, auxInt
-
-					}
-				} else {
-					return true, contadorBloques, auxInt
-				}
-			}
-		}
-		byteLeidos, err = bufferReader.Read(buf)
+		defer file.Close()
+		bufferReader := bufio.NewReader(file)
+	
+		//fmt.Println("\nControlo error:")
+		buf := make([]byte, (codificacion)/8+1)
+		hM := h(len(buf) * 8)
+	
+		byteLeidos, err := bufferReader.Read(buf)
 		if byteLeidos != 0 {
 			manejoError(err)
 		}
-		if byteLeidos < len(buf) {
-			//Se agrego este segmento, para evitar una lectura menor que el buff., se continua leyendo hasta completarlo
-			buf2 := make([]byte, (codificacion)/8+1-byteLeidos)
-			byteLeidos2, err := bufferReader.Read(buf2)
-			if byteLeidos2 != 0 {
+		marcardor := bitsUltimo * 8
+		contadorBloques := 0
+		for bloqueCodificados != 0 {
+			//fmt.Println("Bloque: ", bloqueCodificados, " Bytes Leidos: ", byteLeidos)
+			bloqueCodificados--
+			auxBool := (ByteToBool(buf))
+			if bloqueCodificados == 0 {
+				auxBool = auxBool[:marcardor]
+				hM = h(marcardor)
+			}
+			auxMatriz := MatrizColumna(auxBool)
+			b, sindrome := hM.Multiplicar(auxMatriz)
+			if !b {
+				if sindrome.TieneUnos() {
+					fmt.Println("Sindrome: [", sindrome.ToString(), "]")
+					auxInt := 0
+					for i, fila := range sindrome.datos {
+						mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
+						for _, b := range fila {
+							if b {
+								auxInt = auxInt | mascara[i]
+							}
+						}
+					}
+					auxInt = auxInt - 1
+					if bloqueCodificados == 0 {
+						if auxInt < marcardor {
+							return true, contadorBloques, auxInt
+	
+						}
+					} else {
+						return true, contadorBloques, auxInt
+					}
+				}
+			}
+			byteLeidos, err = bufferReader.Read(buf)
+			if byteLeidos != 0 {
 				manejoError(err)
 			}
-			buf = buf[:byteLeidos]
-			buf = append(buf, buf2...)
+			if byteLeidos < len(buf) {
+				//Se agrego este segmento, para evitar una lectura menor que el buff., se continua leyendo hasta completarlo
+				buf2 := make([]byte, (codificacion)/8+1-byteLeidos)
+				byteLeidos2, err := bufferReader.Read(buf2)
+				if byteLeidos2 != 0 {
+					manejoError(err)
+				}
+				buf = buf[:byteLeidos]
+				buf = append(buf, buf2...)
+			}
+			contadorBloques++
 		}
-		contadorBloques++
 	}
 	return false, -1, -1
 }
