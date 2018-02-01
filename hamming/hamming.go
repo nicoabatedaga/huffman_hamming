@@ -447,7 +447,7 @@ func TieneErrores(url string, info string) (bool, int, int) {
 			b, sindrome := hM.Multiplicar(auxMatriz)
 			if !b {
 				if sindrome.TieneUnos() {
-					fmt.Println("Sindrome: [", sindrome.ToString(), "]")
+					fmt.Println("-Sindrome: [", sindrome.ToString(), "]")
 					auxInt := 0
 					for i, fila := range sindrome.datos {
 						mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
@@ -458,8 +458,12 @@ func TieneErrores(url string, info string) (bool, int, int) {
 						}
 					}
 					auxInt = auxInt - 1
+					
+					fmt.Println("AuxInt: ",auxInt," marcador: ",marcardor," bitsUltimo: ",bitsUltimo, "Bloques: ", bloqueCodificados)
 					if bloqueCodificados == 0 {
 						if auxInt < marcardor {
+							
+							fmt.Println("--Sindrome: [", sindrome.ToString(), "]")
 							return true, contadorBloques, auxInt
 	
 						}
@@ -485,7 +489,7 @@ func TieneErrores(url string, info string) (bool, int, int) {
 			contadorBloques++
 		}
 	}else{
-		fmt.Println(fmt.Sprint("No existe uno de los archivos %s o %s",url,info))
+		fmt.Println("No existe uno de los archivos ",url,info)
 	}
 	return false, -1, -1
 }
