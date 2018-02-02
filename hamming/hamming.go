@@ -144,8 +144,7 @@ func r(codificacion int) *Matriz {
 
 //Proteger funcion que toma de entrada el path de un archivo y lo codifica segun un valor de entrada
 func Proteger(url string, info string, salida string, codificacion int) {
-	fmt.Println("\nProtección Archivo:")
-	if existeArchivo(url){
+	if existeArchivo(url) {
 		file, err := os.Open(url)
 		manejoError(err)
 		defer file.Close()
@@ -208,8 +207,8 @@ func Proteger(url string, info string, salida string, codificacion int) {
 		manejoError(err)
 		fileOinfo.WriteString(fmt.Sprintf("%v\n%v\n%v\n", codificacion, contadorBloques, byteLeidos))
 		fileOinfo.Close()
-	}else{
-		fmt.Println("El archivo no existe, ",url)
+	} else {
+		fmt.Println("El archivo no existe, ", url)
 	}
 }
 
@@ -245,8 +244,6 @@ func Desproteger(url string, info string, salida string) {
 	manejoError(err)
 	bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
 	manejoError(err)
-
-	fmt.Println("\nDesprotección Archivo:", codificacion, bloqueCodificados, bitsUltimo)
 
 	buf := make([]byte, (codificacion)/8+1)
 	bitesInfo := bitsInformacion(codificacion)
@@ -395,7 +392,7 @@ func IntroducirError(url string, info string, salida string) {
 		bufferWriter.Flush()
 	}
 }
-func obtenerInformacion(info string)(int,int,int){
+func obtenerInformacion(info string) (int, int, int) {
 	fileinfo, err := os.Open(info)
 	manejoError(err)
 	defer fileinfo.Close()
@@ -413,22 +410,22 @@ func obtenerInformacion(info string)(int,int,int){
 	bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
 	manejoError(err)
 
-	return codificacion,bloqueCodificados,bitsUltimo
+	return codificacion, bloqueCodificados, bitsUltimo
 }
+
 //TieneErrores toma como parametros un archivo .ham con su archivo de informacion y verifica si tiene error
 func TieneErrores(url string, info string) (bool, int, int) {
-	if existeArchivo(url) && existeArchivo(info){
-		codificacion,bloqueCodificados, bitsUltimo := obtenerInformacion(info)
+	if existeArchivo(url) && existeArchivo(info) {
+		codificacion, bloqueCodificados, bitsUltimo := obtenerInformacion(info)
 
 		file, err := os.Open(url)
 		manejoError(err)
 		defer file.Close()
 		bufferReader := bufio.NewReader(file)
-	
-		//fmt.Println("\nControlo error:")
+
 		buf := make([]byte, (codificacion)/8+1)
 		hM := h(len(buf) * 8)
-	
+
 		byteLeidos, err := bufferReader.Read(buf)
 		if byteLeidos != 0 {
 			manejoError(err)
@@ -436,7 +433,6 @@ func TieneErrores(url string, info string) (bool, int, int) {
 		marcardor := bitsUltimo * 8
 		contadorBloques := 0
 		for bloqueCodificados != 0 {
-			//fmt.Println("Bloque: ", bloqueCodificados, " Bytes Leidos: ", byteLeidos)
 			bloqueCodificados--
 			auxBool := (ByteToBool(buf))
 			if bloqueCodificados == 0 {
@@ -447,7 +443,6 @@ func TieneErrores(url string, info string) (bool, int, int) {
 			b, sindrome := hM.Multiplicar(auxMatriz)
 			if !b {
 				if sindrome.TieneUnos() {
-					fmt.Println("-Sindrome: [", sindrome.ToString(), "]")
 					auxInt := 0
 					for i, fila := range sindrome.datos {
 						mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
@@ -458,14 +453,11 @@ func TieneErrores(url string, info string) (bool, int, int) {
 						}
 					}
 					auxInt = auxInt - 1
-					
-					fmt.Println("AuxInt: ",auxInt," marcador: ",marcardor," bitsUltimo: ",bitsUltimo, "Bloques: ", bloqueCodificados)
+
 					if bloqueCodificados == 0 {
-						if auxInt < marcardor {
-							
-							fmt.Println("--Sindrome: [", sindrome.ToString(), "]")
+						if auxInt < bitsUltimo {
 							return true, contadorBloques, auxInt
-	
+
 						}
 					} else {
 						return true, contadorBloques, auxInt
@@ -477,7 +469,7 @@ func TieneErrores(url string, info string) (bool, int, int) {
 				manejoError(err)
 			}
 			if byteLeidos < len(buf) {
-				//Se agrego este segmento, para evitar una lectura menor que el buff., se continua leyendo hasta completarlo
+				//Cuando la lectura no completa el buffer.
 				buf2 := make([]byte, (codificacion)/8+1-byteLeidos)
 				byteLeidos2, err := bufferReader.Read(buf2)
 				if byteLeidos2 != 0 {
@@ -488,8 +480,8 @@ func TieneErrores(url string, info string) (bool, int, int) {
 			}
 			contadorBloques++
 		}
-	}else{
-		fmt.Println("No existe uno de los archivos ",url,info)
+	} else {
+		fmt.Println("No existe uno de los archivos ", url, info)
 	}
 	return false, -1, -1
 }
