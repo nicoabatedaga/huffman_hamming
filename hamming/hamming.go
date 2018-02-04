@@ -13,14 +13,16 @@ import (
 //Hamming es el programa de prueba
 func Hamming() {
 	fmt.Println("-Hamming-")
-	codificacion := 522
+	//codificacion := 522
 	//codificacion = 1035
-	//codificacion := 2060
+	codificacion := 2060
 
 	fmt.Println(fmt.Sprintf("Codificacion: %v, Bits Paridad: %v, Bits Información: %v",
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
+
+	
 	return
 }
 

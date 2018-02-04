@@ -17,8 +17,8 @@ func TestProteccionDesproteccionArchivo(t *testing.T) {
 		archivoDesprotegido  string
 	}{
 		{"./prueba.txt", "./prueba.ham", "./prueba.haminfo", "./pruebaDesprotegido.txt"},
-		{"./alicia.txt", "./alicia.ham", "./alicia.haminfo", "./aliciaDesprotegido.txt"},
-		//{"./biblia.txt", "./biblia.ham", "./biblia.haminfo", "./bibliaDesprotegido.txt"},
+		//{"./alicia.txt", "./alicia.ham", "./alicia.haminfo", "./aliciaDesprotegido.txt"},
+		///{"./biblia.txt", "./biblia.ham", "./biblia.haminfo", "./bibliaDesprotegido.txt"},
 	}
 	var codificacionesPosibles = []int{2060} //522, 1035,
 	for _, tuplaArchivos := range archivosPrueba {
@@ -40,7 +40,7 @@ func TestProteccionArchivosTieneErrores(t *testing.T) {
 		archivoSalida  string
 	}{
 		{"./prueba.txt", "./prueba.ham"},
-		{"./alicia.txt", "./alicia.ham"},
+		//{"./alicia.txt", "./alicia.ham"},
 		//	{"./biblia.txt", "./biblia.ham"},
 	}
 	var codificacionesPosibles = []int{2060} //522, 1035,
