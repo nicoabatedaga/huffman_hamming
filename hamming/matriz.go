@@ -1,9 +1,11 @@
 package hamming
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 )
 
 //Matriz estructura para almacenar bits en matrices
@@ -53,16 +55,26 @@ func (matrizEntrada *Matriz) ToString() string {
 			}
 		}
 		if contador != 0 {
-			resultado = resultado + fmt.Sprintf("%v", aux)
+			resultado = resultado + fmt.Sprintf("%v\n", aux)
 			aux = 0
 			contador = 0
 		}
-
-		//resultado = resultado + "\n"
 	}
 	return resultado
 }
 
+//GenerarMatrizViaString apartir de un String, su ancho y alto genera la matriz correspodiente, estando codificada en 64 bits la matriz
+/*func GenerarMatrizViaString(cadenaMatriz string, ancho, alto int) Matriz {
+	matriz := NuevaMatriz(ancho, alto)
+	bits := strings.Split(cadenaMatriz, " ")
+	for indiceAlto := 0; indiceAlto < alto; indiceAlto++ {
+		for indiceAncho := 0; indiceAncho < ancho; indiceAncho++ {
+
+		}
+	}
+	return *matriz
+}
+*/
 //ToStringConInfo funcion que convierte una matriz en un string para imprimir en consola
 func (matrizEntrada *Matriz) ToStringConInfo() string {
 	var resultado string
@@ -88,13 +100,14 @@ func (matrizEntrada *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
 		mEn := len(mE.datos)
 
 		if nO == mEn {
-			m := len(matrizEntrada.datos)
-			n := len(mE.datos[0])
+			m := len(matrizEntrada.datos) //alto
+			n := len(mE.datos[0])         //ancho
 			aux := NuevaMatriz(m, n)
-			for k := 0; k < m; k++ {
-				for j := 0; j < n; j++ {
-					for i := 0; i < nO; i++ {
-						aux.datos[k][j] = ((matrizEntrada.datos[k][i] && mE.datos[i][j]) != aux.datos[k][j])
+			for k := 0; k < m; k++ { //indiceFila = k
+				for j := 0; j < n; j++ { //indiceColumna =j
+					for i := 0; i < nO; i++ { //indice = i
+						aux.datos[k][j] =
+							((matrizEntrada.datos[k][i] && mE.datos[i][j]) != aux.datos[k][j])
 					}
 				}
 			}
@@ -144,12 +157,45 @@ func MatrizColumna(matrizEntrada []bool) *Matriz {
 //ToFile graba una Matriz en un archivo binario
 func (matrizEntrada *Matriz) ToFile(url string) {
 	file, err := os.Create(url)
+	manejoError(err)
 	defer file.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	file.WriteString(matrizEntrada.ToString())
+	alto := len(matrizEntrada.datos)
+	ancho := len(matrizEntrada.datos[0])
+	_, err = file.WriteString(fmt.Sprintf("%v\n%v\n", alto, ancho))
+	manejoError(err)
+	_, err = file.WriteString(matrizEntrada.ToString())
+	manejoError(err)
 	return
+}
+
+//ToMatriz carga la matriz desde un archivo
+func ToMatriz(url string) Matriz {
+	archivo, err := os.Open(url)
+	manejoError(err)
+	defer archivo.Close()
+	bufferReader := bufio.NewReader(archivo)
+	line, err := bufferReader.ReadString('\n')
+	manejoError(err)
+	alto, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+	line, err = bufferReader.ReadString('\n')
+	manejoError(err)
+	ancho, err := strconv.Atoi(line[:len(line)-1])
+	manejoError(err)
+	matriz := *NuevaMatriz(ancho, alto)
+	for indiceAlto := 0; indiceAlto < alto; indiceAlto++ {
+		line, err = bufferReader.ReadString('\n')
+		manejoError(err)
+		for indiceAncho, caracter := range line {
+			valor, err := strconv.Atoi(string(caracter))
+			manejoError(err)
+			matriz.datos[indiceAlto][indiceAncho] = valor == 1
+		}
+	}
+	return matriz
 }
 
 //ToFileConInfo graba una Matriz en un archivo binario retornando a la vez la información
@@ -177,4 +223,15 @@ func ByteToBool(entrada []byte) []bool {
 		auxB[i*8+7] = ((b & 128) != 0)
 	}
 	return auxB
+}
+
+func compararMatrices(matriz1, matriz2 Matriz) bool {
+	ancho1 := len(matriz1.datos)
+	ancho2 := len(matriz2.datos)
+	alto1 := len(matriz1.datos[0])
+	alto2 := len(matriz2.datos[0])
+	if ancho1 != ancho2 || alto1 != alto2 {
+		return false
+	}
+	return true
 }

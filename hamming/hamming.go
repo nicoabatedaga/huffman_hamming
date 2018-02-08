@@ -2,27 +2,82 @@ package hamming
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"time"
 )
 
+var matrizH = map[int]*Matriz{
+	522:  h(528),
+	1035: h(1040),
+	2060: h(2064),
+}
+var matrizG = map[int]*Matriz{
+	522:  g(522),
+	1035: g(1035),
+	2060: g(2060),
+}
+var matrizR = map[int]*Matriz{
+	522:  r(528),
+	1035: r(1040),
+	2060: r(2064),
+}
+
+var informacion = map[int]int{
+	522:  512,
+	1035: 1024,
+	2060: 2048,
+}
+
+var paridad = map[int]int{
+	522:  10,
+	1035: 11,
+	2060: 12,
+}
+
+//GenerarArchivosMatrices genera los distintos archivos para las matrices
+func GenerarArchivosMatrices(conInfo bool) {
+	codificaciones := []int{522, 1035, 2060}
+	for _, cod := range codificaciones {
+		h := h(cod)
+		h.ToFile(fmt.Sprintf("./H%v.matriz", cod))
+		g := g(cod)
+		g.ToFile(fmt.Sprintf("./G%v.matriz", cod))
+		r := r(cod)
+		r.ToFile(fmt.Sprintf("./R%v.matriz", cod))
+		if conInfo {
+			h.ToFileConInfo(fmt.Sprintf("./H%vconInf.matriz", cod))
+			g.ToFileConInfo(fmt.Sprintf("./G%vconInf.matriz", cod))
+			r.ToFileConInfo(fmt.Sprintf("./R%vconInfo.matriz", cod))
+		}
+
+	}
+}
+
 //Hamming es el programa de prueba
 func Hamming() {
+
+	codificaciones := []int{522, 1035, 2060}
+	for _, cod := range codificaciones {
+		fmt.Printf("%v,paridad:%v, informacion:%v\n", cod, bitsInformacion(cod), bitsParidad(cod))
+	}
 	fmt.Println("-Hamming-")
 	//codificacion := 522
 	//codificacion = 1035
 	codificacion := 2060
-
+	testProteccionArchivosTieneErrores()
+	testProteccionDesproteccionArchivo()
 	fmt.Println(fmt.Sprintf("Codificacion: %v, Bits Paridad: %v, Bits Información: %v",
 		codificacion,
 		bitsParidad(codificacion),
 		bitsInformacion(codificacion)))
 
-	
 	return
 }
 
@@ -64,6 +119,39 @@ func bitsParidad(ent int) int {
 	return n
 }
 
+func matrizChequeoDeParidadH(codificacion int) (*MatrizBytes, error) {
+	c := [][]byte{{}}
+	var matrizVacia = MatrizBytes{datos: c}
+	if codificacion == 522 || codificacion == 1040 || codificacion == 2060 {
+		faltante := 7 - codificacion%8
+		alto := codificacion + faltante
+		ancho := 2
+		matriz := NuevaMatrizBytes(ancho, alto)
+		for posicion := 0; posicion < paridad[codificacion]; posicion++ {
+			contadorBinario := 1
+			uno := false
+			f := float64(posicion)
+			potencia := int(math.Pow(2, f))
+			for fila := 0; fila < alto; fila++ {
+				if potencia == contadorBinario {
+					contadorBinario = 0
+					uno = !uno
+				}
+				contadorBinario++
+				if uno {
+					err := matriz.Set(fila, posicion, true)
+					if err != nil {
+						return &matrizVacia, fmt.Errorf("h: no se pudo settiar %s", err)
+					}
+				}
+			}
+		}
+		return matriz, nil
+
+	}
+	return &matrizVacia, fmt.Errorf("h: no corresponde a una codificacion aceptada %v", codificacion)
+}
+
 //h metodo que devuelve la matriz que se multiplica para codificar una entrada
 func h(codificacion int) *Matriz {
 	altoMatriz := codificacion
@@ -72,9 +160,10 @@ func h(codificacion int) *Matriz {
 	for i := 0; i < anchoMatriz; i++ {
 		contadorBinario := 1
 		uno := false
+		f := float64(i)
+		potencia := int(math.Pow(2, f))
 		for j := 0; j < altoMatriz; j++ {
-			f := float64(i)
-			if int(math.Pow(2, f)) == contadorBinario {
+			if potencia == contadorBinario {
 				contadorBinario = 0
 				uno = !uno
 			}
@@ -85,6 +174,55 @@ func h(codificacion int) *Matriz {
 		}
 	}
 	return matriz
+}
+
+func matrizGeneradoraG(codificacion int) (*MatrizBytes, error) {
+	c := [][]byte{{}}
+	var matrizVacia = MatrizBytes{datos: c}
+	if codificacion == 522 || codificacion == 1040 || codificacion == 2060 {
+		ancho := codificacion / 8
+		alto := informacion[codificacion]
+		matriz := NuevaMatrizBytes(ancho, alto)
+		indiceFilaIdentidad := 0
+		p := -1
+		for indiceColumna := 0; indiceColumna < ancho*8; indiceColumna++ {
+			if !esPotenciaDeDos(indiceColumna + 1) {
+				matriz.Set(indiceColumna, indiceFilaIdentidad, true)
+				indiceFilaIdentidad++
+			} else {
+				p++
+				f := float64(p)
+				potencia := int(math.Pow(2, f))
+				r := 1
+				uno := false
+				contadorBinario := 1
+				for indiceFila := 0; indiceFila < alto; indiceFila++ {
+					for esPotenciaDeDos(r) {
+						r++
+						if contadorBinario == potencia {
+							uno = !uno
+							contadorBinario = 0
+						}
+						contadorBinario++
+					}
+					if contadorBinario == potencia {
+						uno = !uno
+						contadorBinario = 0
+					}
+					contadorBinario++
+					if uno {
+						matriz.Set(indiceColumna, indiceFila, true)
+					}
+					r++
+				}
+
+			}
+		}
+
+		return matriz, nil
+	}
+	return &matrizVacia, fmt.Errorf("g: no corresponde a una codificacion aceptada %v", codificacion)
+
 }
 
 //g Funcion que crea la matriz generadora
@@ -100,21 +238,21 @@ func g(codificacion int) *Matriz {
 			indiceFilaIdentidad++
 		} else {
 			p++
+			f := float64(p)
+			potencia := int(math.Pow(2, f))
 			r := 1
 			uno := false
 			contadorBinario := 1
 			for indiceFila := 0; indiceFila < altoMatriz; indiceFila++ {
 				for esPotenciaDeDos(r) {
 					r++
-					f := float64(p)
-					if contadorBinario == int(math.Pow(2, f)) {
+					if contadorBinario == potencia {
 						uno = !uno
 						contadorBinario = 0
 					}
 					contadorBinario++
 				}
-				f := float64(p)
-				if contadorBinario == int(math.Pow(2, f)) {
+				if contadorBinario == potencia {
 					uno = !uno
 					contadorBinario = 0
 				}
@@ -144,24 +282,55 @@ func r(codificacion int) *Matriz {
 	return matriz
 }
 
+func matrizDecodificador(codificacion int) (*MatrizBytes, error) {
+	c := [][]byte{{}}
+	var matrizVacia = MatrizBytes{datos: c}
+	if codificacion == 528 || codificacion == 1040 || codificacion == 2060 {
+		faltante := 7 - codificacion%8
+		alto := codificacion + faltante
+		ancho := informacion[codificacion] / 8
+		matriz := NuevaMatrizBytes(ancho, alto)
+		indiceColumna := 0
+		for indiceFila := 0; indiceFila < alto; indiceFila++ {
+			if !esPotenciaDeDos(indiceFila + 1) {
+				matriz.Set(indiceColumna, indiceFila, true)
+				indiceColumna++
+			}
+		}
+		return matriz, nil
+	}
+	return &matrizVacia, fmt.Errorf("r: no corresponde a una codificacion aceptada %v", codificacion)
+
+}
+
 //Proteger funcion que toma de entrada el path de un archivo y lo codifica segun un valor de entrada
-func Proteger(url string, info string, salida string, codificacion int) {
+func Proteger(url string, info string, salida string, codificacion int) error {
+	if !(codificacion == 2060 || codificacion == 1035 || codificacion == 522) {
+		return fmt.Errorf("error:no corresponde a una codificacion aceptada, %v", codificacion)
+	}
 	if existeArchivo(url) {
 		file, err := os.Open(url)
-		manejoError(err)
+		if err != nil {
+			return fmt.Errorf("error:no se pudo abrir el archivo %s %s", url, err)
+		}
 		defer file.Close()
+
 		fileO, err := os.Create(salida)
-		manejoError(err)
+		if err != nil {
+			return fmt.Errorf("error:no se pudo crear el archivo de salida %s %s", salida, err)
+		}
 		fileO.Close()
 		fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
-		manejoError(err)
+		if err != nil {
+			return fmt.Errorf("error:no se pudo abrir el archivo de salida %s %s", salida, err)
+		}
 		defer fileO.Close()
 
 		bufferReader := bufio.NewReader(file)
 		bufferWriter := bufio.NewWriter(fileO)
 
 		buf := make([]byte, bitsInformacion(codificacion)/8)
-		g := g(codificacion)
+		g := matrizG[codificacion]
 
 		byteLeidos, err := bufferReader.Read(buf)
 		if byteLeidos != 0 {
@@ -186,7 +355,6 @@ func Proteger(url string, info string, salida string, codificacion int) {
 				}
 				numB, err := bufferWriter.Write(bin)
 
-				//fmt.Println("Bloque: ", contadorBloques, " Bytes Escritos: ", numB)
 				if numB == 0 {
 					fmt.Println(contadorBloques, ":No se escribio nada")
 				}
@@ -203,53 +371,48 @@ func Proteger(url string, info string, salida string, codificacion int) {
 		bufferWriter.Flush()
 
 		fileOinfo, err := os.Create(info)
-		manejoError(err)
+		if err != nil {
+			return fmt.Errorf("error:no se pudo crear el archivo %s %s", info, err)
+		}
 		fileOinfo.Close()
 		fileOinfo, err = os.OpenFile(info, os.O_WRONLY, 0666)
-		manejoError(err)
+		if err != nil {
+			return fmt.Errorf("error:no se pudo abrir el archivo %s %s", info, err)
+		}
 		fileOinfo.WriteString(fmt.Sprintf("%v\n%v\n%v\n", codificacion, contadorBloques, byteLeidos))
 		fileOinfo.Close()
-	} else {
-		fmt.Println("El archivo no existe, ", url)
+		return nil
 	}
+	return fmt.Errorf("El archivo no existe, %s", url)
 }
 
 //Desproteger le doy un url de entrada y uno de salida
-func Desproteger(url string, info string, salida string) {
+func Desproteger(url string, info string, salida string) error {
 
 	file, err := os.Open(url)
-	manejoError(err)
+	if err != nil {
+		return fmt.Errorf("error:no se pudo abrir el archivo %s %s", url, err)
+	}
 	defer file.Close()
-	fileinfo, err := os.Open(info)
-	manejoError(err)
-	defer fileinfo.Close()
 	fileO, err := os.Create(salida)
-	manejoError(err)
+	if err != nil {
+		return fmt.Errorf("error:no se pudo crear el archivo %s %s", salida, err)
+	}
 	fileO.Close()
 	fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
-	manejoError(err)
+	if err != nil {
+		return fmt.Errorf("error:no se pudo abrir el archivo %s %s", salida, err)
+	}
 	defer fileO.Close()
 
-	bufferReaderInfo := bufio.NewReader(fileinfo)
 	bufferReader := bufio.NewReader(file)
 	bufferWriter := bufio.NewWriter(fileO)
 
-	line, err := bufferReaderInfo.ReadString('\n')
-	manejoError(err)
-	codificacion, err := strconv.Atoi(line[:len(line)-1])
-	manejoError(err)
-	line, err = bufferReaderInfo.ReadString('\n')
-	manejoError(err)
-	bloqueCodificados, err := strconv.Atoi(line[:len(line)-1])
-	manejoError(err)
-	line, err = bufferReaderInfo.ReadString('\n')
-	manejoError(err)
-	bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
-	manejoError(err)
+	codificacion, bloqueCodificados, bitsUltimo := obtenerInformacion(info)
 
 	buf := make([]byte, (codificacion)/8+1)
 	bitesInfo := bitsInformacion(codificacion)
-	r := r(len(buf) * 8)
+	r := matrizR[codificacion]
 
 	byteLeidos, err := bufferReader.Read(buf)
 	if byteLeidos != 0 {
@@ -259,7 +422,6 @@ func Desproteger(url string, info string, salida string) {
 	for bloqueCodificados != 0 {
 		bloqueCodificados--
 		auxBool := (ByteToBool(buf))
-		//[:bitesInfo]
 		auxMatriz := MatrizColumna(auxBool)
 		b, m := r.Multiplicar(auxMatriz)
 		if !b {
@@ -296,6 +458,7 @@ func Desproteger(url string, info string, salida string) {
 		}
 	}
 	bufferWriter.Flush()
+	return nil
 }
 
 //IntroducirError toma como parametros un archivo .ham y devuelve un .ham con un erro introducido
@@ -304,12 +467,10 @@ func IntroducirError(url string, info string, salida string) {
 	if error {
 		fmt.Println("El archivo ya contiene un error en el bloque", b, " en ", l)
 	} else {
+		codificacion, bloqueCodificados, bitsUltimo := obtenerInformacion(info)
 		file, err := os.Open(url)
 		manejoError(err)
 		defer file.Close()
-		fileinfo, err := os.Open(info)
-		manejoError(err)
-		defer fileinfo.Close()
 		fileO, err := os.Create(salida)
 		manejoError(err)
 		fileO.Close()
@@ -317,22 +478,8 @@ func IntroducirError(url string, info string, salida string) {
 		manejoError(err)
 		defer fileO.Close()
 
-		bufferReaderInfo := bufio.NewReader(fileinfo)
 		bufferReader := bufio.NewReader(file)
 		bufferWriter := bufio.NewWriter(fileO)
-
-		line, err := bufferReaderInfo.ReadString('\n')
-		manejoError(err)
-		codificacion, err := strconv.Atoi(line[:len(line)-1])
-		manejoError(err)
-		line, err = bufferReaderInfo.ReadString('\n')
-		manejoError(err)
-		bloqueCodificados, err := strconv.Atoi(line[:len(line)-1])
-		manejoError(err)
-		line, err = bufferReaderInfo.ReadString('\n')
-		manejoError(err)
-		bitsUltimo, err := strconv.Atoi(line[:len(line)-1])
-		manejoError(err)
 
 		fmt.Println("\nIntroducción error:")
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -394,6 +541,81 @@ func IntroducirError(url string, info string, salida string) {
 		bufferWriter.Flush()
 	}
 }
+
+/*
+//CorregirError dado un archivo, su archivo de info y un path de salida genera la salida de los mismos
+func CorregirError(url string, info string, salida string) {
+	fmt.Println("Corregir Error")
+	error, bloqueError, posicionError := TieneErrores(url, info)
+	if !error {
+		fmt.Println("El archivo no tiene error")
+	} else {
+		codificacion, bloqueCodificados, bitsUltimo := obtenerInformacion(info)
+		file, err := os.Open(url)
+		manejoError(err)
+		defer file.Close()
+		fileO, err := os.Create(salida)
+		manejoError(err)
+		fileO.Close()
+		fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
+		manejoError(err)
+		defer fileO.Close()
+
+		bufferReader := bufio.NewReader(file)
+		bufferWriter := bufio.NewWriter(fileO)
+
+		fmt.Println("Bloque Error:", bloqueError)
+
+		buf := make([]byte, (codificacion)/8+1)
+		byteLeidos, err := bufferReader.Read(buf)
+		if byteLeidos != 0 {
+			manejoError(err)
+		}
+		contadorBloques := -1
+		for bloqueCodificados != 0 {
+			bloqueCodificados--
+			contadorBloques++
+			if contadorBloques == bloqueError {
+				fmt.Println("Posición: ", posicionError)
+				mascara := []int{1, 128, 64, 32, 16, 8, 4, 2}
+				fmt.Println("Antes: ", buf[posicionError/8])
+				fmt.Println("Mascara: ", mascara[posicionError%8])
+				buf[posicionError/8] = byte(int(buf[posicionError/8]) ^ mascara[posicionError%8])
+				fmt.Println("Despues: ", buf[posicionError/8])
+
+			}
+			if bloqueCodificados == 0 {
+				buf = buf[:bitsUltimo]
+			} else {
+				buf = buf[:byteLeidos]
+			}
+			numB, err := bufferWriter.Write(buf)
+
+			if bufferWriter.Available() < len(buf) {
+				bufferWriter.Flush()
+			}
+			if numB == 0 {
+				fmt.Println(contadorBloques, ":No se escribio nada")
+			}
+			manejoError(err)
+			byteLeidos, err = bufferReader.Read(buf)
+			if byteLeidos != 0 {
+				manejoError(err)
+			}
+			if byteLeidos < len(buf) {
+				//Se agrego este segmento, para evitar una lectura menor que el buff., se continua leyendo hasta completarlo
+				buf2 := make([]byte, (codificacion)/8+1-byteLeidos)
+				byteLeidos2, err := bufferReader.Read(buf2)
+				if byteLeidos2 != 0 {
+					manejoError(err)
+				}
+				buf = buf[:byteLeidos]
+				buf = append(buf, buf2...)
+			}
+		}
+		bufferWriter.Flush()
+	}
+}*/
 func obtenerInformacion(info string) (int, int, int) {
 	fileinfo, err := os.Open(info)
 	manejoError(err)
@@ -426,7 +648,7 @@ func TieneErrores(url string, info string) (bool, int, int) {
 		bufferReader := bufio.NewReader(file)
 
 		buf := make([]byte, (codificacion)/8+1)
-		hM := h(len(buf) * 8)
+		hM := matrizH[codificacion]
 
 		byteLeidos, err := bufferReader.Read(buf)
 		if byteLeidos != 0 {
@@ -488,41 +710,81 @@ func TieneErrores(url string, info string) (bool, int, int) {
 	return false, -1, -1
 }
 
-//AgregarError a un archivo, si devuelve true es porque agrego error, sino ya habia antes un error
-/*func AgregarError(operando *Matriz) bool {
-	tieneError, _ := TieneError(operando)
-	if tieneError {
-		return false
+func testProteccionDesproteccionArchivo() {
+	fmt.Println("Test Proteccion-Desproteccion")
+	var archivosPrueba = []struct {
+		archivoEntrada       string
+		archivoProtegido     string
+		archivoProtegidoInfo string
+		archivoDesprotegido  string
+	}{
+		//{"./prueba.txt", "./prueba.ham", "./prueba.haminfo", "./pruebaDesprotegido.txt"},
+		{"./alicia.txt", "./alicia.ham", "./alicia.haminfo", "./aliciaDesprotegido.txt"},
+		///{"./biblia.txt", "./biblia.ham", "./biblia.haminfo", "./bibliaDesprotegido.txt"},
 	}
-	n := len(operando.datos)
-	m := len(operando.datos[0])
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	i := r.Intn(n)
-	j := r.Intn(m)
-	operando.datos[i][j] = !operando.datos[i][j]
-	return true
-}
-*/
-//CorregirError toma como entrada una matriz, si la corrige retorna verdadero, sino retorna false
-/*func CorregirError(operando *Matriz) bool {
-	tieneError, posicion := TieneError(operando)
-	if tieneError {
-		if posicion != -1 {
-			operando.datos[posicion][0] = !operando.datos[posicion][0]
-			return true
+	var codificacionesPosibles = []int{522, 1035, 2060} //
+	for _, tuplaArchivos := range archivosPrueba {
+		for _, codificacion := range codificacionesPosibles {
+			error := Proteger(tuplaArchivos.archivoEntrada, tuplaArchivos.archivoProtegidoInfo, tuplaArchivos.archivoProtegido, codificacion)
+			manejoError(error)
+			error = Desproteger(tuplaArchivos.archivoProtegido, tuplaArchivos.archivoProtegidoInfo, tuplaArchivos.archivoDesprotegido)
+			manejoError(error)
+			if !compararArchivos(tuplaArchivos.archivoEntrada, tuplaArchivos.archivoDesprotegido) {
+				fmt.Printf("-Error en el %s para la codificacion %d\n", tuplaArchivos.archivoEntrada, codificacion)
+			} else {
+				fmt.Printf("Exito en el %s para la codificacion %d\n", tuplaArchivos.archivoEntrada, codificacion)
+			}
 		}
 	}
-	return false
-}*/
+}
 
-//matrizEntradaPrueba genera una matriz de entrada aleatoria del tamaño de la codificacion
-func matrizEntradaPrueba(codificacion int) *Matriz {
-	aux := make([]bool, bitsInformacion(codificacion))
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	for i := range aux {
-		j := r.Intn(100)
-		aux[i] = (j%2 == 1)
+func testProteccionArchivosTieneErrores() {
+	fmt.Println("Test Proteccion-Tiene Errores")
+	var archivosPrueba = []struct {
+		archivoEntrada string
+		archivoSalida  string
+	}{
+		//{"./prueba.txt", "./prueba.ham"},
+		{"./alicia.txt", "./alicia.ham"},
+		//	{"./biblia.txt", "./biblia.ham"},
 	}
-	m := MatrizColumna(aux)
-	return m
+	var codificacionesPosibles = []int{522, 1035, 2060} //
+	for _, parArchivos := range archivosPrueba {
+		for _, codificacion := range codificacionesPosibles {
+			erro := Proteger(parArchivos.archivoEntrada, parArchivos.archivoSalida+"info", parArchivos.archivoSalida, codificacion)
+			manejoError(erro)
+			error, bloque, posicion := TieneErrores(parArchivos.archivoSalida, parArchivos.archivoSalida+"info")
+			if error {
+				fmt.Printf("Error en %s(%d):en el bloque %d en la posición %d\n", parArchivos.archivoEntrada, codificacion, bloque, posicion)
+			} else {
+				fmt.Printf("Exito en el %s para la codificacion %d\n", parArchivos.archivoEntrada, codificacion)
+			}
+		}
+	}
+}
+func compararArchivos(path1, path2 string) bool {
+	archivo1, error := os.Open(path1)
+	manejoError(error)
+	archivo2, error := os.Open(path2)
+	manejoError(error)
+	for {
+		buffer1 := make([]byte, 64000)
+		_, error1 := archivo1.Read(buffer1)
+		buffer2 := make([]byte, 64000)
+		_, error2 := archivo2.Read(buffer2)
+		if error1 != nil || error2 != nil {
+			if error1 == io.EOF && error2 == io.EOF {
+				return true
+			} else if error1 == io.EOF || error2 == io.EOF {
+				return false
+			} else {
+				manejoError(error1)
+				manejoError(error2)
+			}
+		}
+		if !bytes.Equal(buffer1, buffer2) {
+			return false
+		}
+	}
+
 }
