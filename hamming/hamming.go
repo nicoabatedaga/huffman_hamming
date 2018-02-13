@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"math/rand"
 	"os"
+	"runtime/pprof"
 	"strconv"
 	"time"
 )
@@ -50,6 +52,14 @@ func Hamming() {
 	//codificacion = 1035
 	//codificacion := 2060
 	comienzoPrograma := time.Now()
+	f, err := os.Create("./cpu.profile")
+	if err != nil {
+		log.Fatal("could not create CPU profile: ", err)
+	}
+	//trace.Start(f)
+	//defer trace.Stop()
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 	//testProteccionDesproteccionArchivoByte()
 	testProteccionDesproteccionArchivo()
 	fmt.Println("Tiempo ejecucion:\t", tiempoStr(time.Now().Sub(comienzoPrograma)))
@@ -417,7 +427,7 @@ func Proteger(url string, info string, salida string, codificacion int) error {
 		contadorBloques := 0
 		for byteLeidos > 0 {
 			auxMatriz := MatrizColumna(ByteToBool(buf))
-			b, m := matrizG.Multiplicar(auxMatriz)
+			b, m := matrizG.MultiplicarOpt(auxMatriz)
 			if !b {
 				contadorBloques++
 				bin := m.ToByte()
@@ -501,7 +511,7 @@ func Desproteger(url string, info string, salida string) error {
 		bloqueCodificados--
 		auxBool := (ByteToBool(buf))
 		auxMatriz := MatrizColumna(auxBool)
-		b, m := r.Multiplicar(auxMatriz)
+		b, m := r.MultiplicarOpt(auxMatriz)
 		if !b {
 			contadorBloques++
 			bin := m.ToByte()
@@ -949,8 +959,8 @@ func testProteccionDesproteccionArchivo() {
 		archivoProtegidoInfo string
 		archivoDesprotegido  string
 	}{
-		{"./prueba.txt", "./prueba.ham", "./prueba.haminfo", "./pruebaDesprotegido.txt"},
-		{"./alicia.txt", "./alicia.ham", "./alicia.haminfo", "./aliciaDesprotegido.txt"},
+		//{"./prueba.txt", "./prueba.ham", "./prueba.haminfo", "./pruebaDesprotegido.txt"},
+		//{"./alicia.txt", "./alicia.ham", "./alicia.haminfo", "./aliciaDesprotegido.txt"},
 		{"./biblia.txt", "./biblia.ham", "./biblia.haminfo", "./bibliaDesprotegido.txt"},
 	}
 	var codificacionesPosibles = []int{2060} //522, 1035,

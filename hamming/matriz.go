@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 )
 
 //Matriz estructura para almacenar bits en matrices
@@ -111,6 +112,42 @@ func (matrizEntrada *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
 					}
 				}
 			}
+			return false, *aux
+		}
+
+		fmt.Println("Error:El ancho y el alto de las matrices no concuerdan", nO, mEn)
+	} else {
+		fmt.Println("Error:no hay datos cargados en las matrices.")
+	}
+	c := [][]bool{{}}
+	var v = Matriz{datos: c}
+	return true, v
+}
+
+//MultiplicarOpt Funcion que multiplica dos matrices y devuelve sus resultado
+func (matrizEntrada *Matriz) MultiplicarOpt(mE *Matriz) (bool, Matriz) {
+	if matrizEntrada.datos != nil || matrizEntrada.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {
+		nO := len(matrizEntrada.datos[0])
+		mEn := len(mE.datos)
+		if nO == mEn {
+			m := len(matrizEntrada.datos) //alto
+			n := len(mE.datos[0])         //ancho
+			var w sync.WaitGroup
+			w.Add(m)
+			aux := NuevaMatriz(m, n)
+			for k := 0; k < m; k++ { //indiceFila = k
+				go func(k int) {
+					for j := 0; j < n; j++ { //indiceColumna =j
+						for i := 0; i < nO; i++ { //indice = i
+							aux.datos[k][j] =
+								((matrizEntrada.datos[k][i] && mE.datos[i][j]) != aux.datos[k][j])
+						}
+					}
+					w.Done()
+				}(k)
+
+			}
+			w.Wait()
 			return false, *aux
 		}
 
