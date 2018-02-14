@@ -139,8 +139,8 @@ func (matrizEntrada *Matriz) MultiplicarOpt(mE *Matriz) (bool, Matriz) {
 				go func(k int) {
 					for j := 0; j < n; j++ { //indiceColumna =j
 						for i := 0; i < nO; i++ { //indice = i
-							aux.datos[k][j] =
-								((matrizEntrada.datos[k][i] && mE.datos[i][j]) != aux.datos[k][j])
+							valor := matrizEntrada.datos[k][i] && mE.datos[i][j]
+							aux.xor(k, j, valor)
 						}
 					}
 					w.Done()
@@ -160,6 +160,11 @@ func (matrizEntrada *Matriz) MultiplicarOpt(mE *Matriz) (bool, Matriz) {
 	return true, v
 }
 
+func (matrizEntrada *Matriz) xor(k, j int, valor bool) {
+	valorV := matrizEntrada.datos[k][j]
+	matrizEntrada.datos[k][j] = valor != valorV
+}
+
 //TieneUnos controla si algun valor de la matriz es igual a 1
 func (matrizEntrada *Matriz) TieneUnos() bool {
 	for i := range matrizEntrada.datos {
@@ -175,6 +180,7 @@ func (matrizEntrada *Matriz) TieneUnos() bool {
 //NuevaMatriz funcion que crea la matriz y le asigna espacio dato a su ancho x alto
 func NuevaMatriz(ancho int, alto int) *Matriz {
 	aux := make([][]bool, ancho)
+
 	for i := range aux {
 		aux[i] = make([]bool, alto)
 	}
@@ -184,11 +190,13 @@ func NuevaMatriz(ancho int, alto int) *Matriz {
 
 //MatrizColumna apartir de una cadena de bytes crea la matriz columna
 func MatrizColumna(matrizEntrada []bool) *Matriz {
-	aux := NuevaMatriz(len(matrizEntrada), 1)
+	dat := make([][]bool, len(matrizEntrada))
 	for i, b := range matrizEntrada {
-		aux.datos[i][0] = b
+		dat[i] = make([]bool, 1)
+		dat[i][0] = b
 	}
-	return aux
+	m := Matriz{datos: dat}
+	return &m
 }
 
 //ToFile graba una Matriz en un archivo binario
@@ -258,8 +266,10 @@ func ByteToBool(entrada []byte) []bool {
 		auxB[i*8+5] = ((b & 32) != 0)
 		auxB[i*8+6] = ((b & 64) != 0)
 		auxB[i*8+7] = ((b & 128) != 0)
+
 	}
 	return auxB
+
 }
 
 func compararMatrices(matriz1, matriz2 Matriz) bool {

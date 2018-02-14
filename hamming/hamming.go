@@ -8,7 +8,9 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	_ "net/http/pprof"
 	"os"
+	"runtime"
 	"runtime/pprof"
 	"strconv"
 	"time"
@@ -52,18 +54,32 @@ func Hamming() {
 	//codificacion = 1035
 	//codificacion := 2060
 	comienzoPrograma := time.Now()
-	f, err := os.Create("./cpu.profile")
+	/*f, err := os.Create("./cpu.trace")
 	if err != nil {
 		log.Fatal("could not create CPU profile: ", err)
 	}
-	//trace.Start(f)
-	//defer trace.Stop()
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	trace.Start(f)
+	defer trace.Stop()*/
+	/*
+		f, err := os.Create("./cpu.profile")
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()*/
 	//testProteccionDesproteccionArchivoByte()
 	testProteccionDesproteccionArchivo()
 	fmt.Println("Tiempo ejecucion:\t", tiempoStr(time.Now().Sub(comienzoPrograma)))
 
+	f, err := os.Create("./memoria.profile")
+	if err != nil {
+		log.Fatal("could not create memory profile: ", err)
+	}
+	runtime.GC() // get up-to-date statistics
+	if err := pprof.WriteHeapProfile(f); err != nil {
+		log.Fatal("could not write memory profile: ", err)
+	}
+	f.Close()
 	return
 }
 
@@ -426,7 +442,8 @@ func Proteger(url string, info string, salida string, codificacion int) error {
 
 		contadorBloques := 0
 		for byteLeidos > 0 {
-			auxMatriz := MatrizColumna(ByteToBool(buf))
+			arbool := ByteToBool(buf)
+			auxMatriz := MatrizColumna(arbool)
 			b, m := matrizG.MultiplicarOpt(auxMatriz)
 			if !b {
 				contadorBloques++
@@ -963,7 +980,7 @@ func testProteccionDesproteccionArchivo() {
 		//{"./alicia.txt", "./alicia.ham", "./alicia.haminfo", "./aliciaDesprotegido.txt"},
 		{"./biblia.txt", "./biblia.ham", "./biblia.haminfo", "./bibliaDesprotegido.txt"},
 	}
-	var codificacionesPosibles = []int{2060} //522, 1035,
+	var codificacionesPosibles = []int{522, 1035, 2060} //522, 1035,
 	for _, tuplaArchivos := range archivosPrueba {
 		for _, codificacion := range codificacionesPosibles {
 			ahora := time.Now()
