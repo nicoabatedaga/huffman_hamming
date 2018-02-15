@@ -15,7 +15,7 @@ type Matriz struct {
 }
 
 //ToByte transforma una matriz en un arreglo de bytes (solo funciona para las matrices columna)
-func (matrizEntrada *Matriz) ToByte() []byte {
+func (matrizEntrada Matriz) ToByte() []byte {
 	ancho := len(matrizEntrada.datos)
 	alto := len(matrizEntrada.datos[0])
 	tam := ancho * alto / 8
@@ -39,7 +39,7 @@ func (matrizEntrada *Matriz) ToByte() []byte {
 }
 
 //ToString funcion que convierte una matriz en un string para imprimir en consola
-func (matrizEntrada *Matriz) ToString() string {
+func (matrizEntrada Matriz) ToString() string {
 	var resultado string
 	var aux uint64
 	var contador uint64
@@ -77,7 +77,7 @@ func (matrizEntrada *Matriz) ToString() string {
 }
 */
 //ToStringConInfo funcion que convierte una matriz en un string para imprimir en consola
-func (matrizEntrada *Matriz) ToStringConInfo() string {
+func (matrizEntrada Matriz) ToStringConInfo() string {
 	var resultado string
 	fmt.Println(fmt.Sprintf("M: %v, N: %v", len(matrizEntrada.datos), len(matrizEntrada.datos[0])))
 	for _, r := range matrizEntrada.datos {
@@ -95,7 +95,7 @@ func (matrizEntrada *Matriz) ToStringConInfo() string {
 }
 
 //Multiplicar Funcion que multiplica dos matrices y devuelve sus resultado
-func (matrizEntrada *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
+func (matrizEntrada Matriz) Multiplicar(mE Matriz) (bool, Matriz) {
 	if matrizEntrada.datos != nil || matrizEntrada.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {
 		nO := len(matrizEntrada.datos[0])
 		mEn := len(mE.datos)
@@ -112,7 +112,7 @@ func (matrizEntrada *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
 					}
 				}
 			}
-			return false, *aux
+			return false, aux
 		}
 
 		fmt.Println("Error:El ancho y el alto de las matrices no concuerdan", nO, mEn)
@@ -125,7 +125,7 @@ func (matrizEntrada *Matriz) Multiplicar(mE *Matriz) (bool, Matriz) {
 }
 
 //MultiplicarOpt Funcion que multiplica dos matrices y devuelve sus resultado
-func (matrizEntrada *Matriz) MultiplicarOpt(mE *Matriz) (bool, Matriz) {
+func (matrizEntrada Matriz) MultiplicarOpt(mE Matriz) (bool, Matriz) {
 	if matrizEntrada.datos != nil || matrizEntrada.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {
 		nO := len(matrizEntrada.datos[0])
 		mEn := len(mE.datos)
@@ -148,7 +148,7 @@ func (matrizEntrada *Matriz) MultiplicarOpt(mE *Matriz) (bool, Matriz) {
 
 			}
 			w.Wait()
-			return false, *aux
+			return false, aux
 		}
 
 		fmt.Println("Error:El ancho y el alto de las matrices no concuerdan", nO, mEn)
@@ -160,13 +160,13 @@ func (matrizEntrada *Matriz) MultiplicarOpt(mE *Matriz) (bool, Matriz) {
 	return true, v
 }
 
-func (matrizEntrada *Matriz) xor(k, j int, valor bool) {
+func (matrizEntrada Matriz) xor(k, j int, valor bool) {
 	valorV := matrizEntrada.datos[k][j]
 	matrizEntrada.datos[k][j] = valor != valorV
 }
 
 //TieneUnos controla si algun valor de la matriz es igual a 1
-func (matrizEntrada *Matriz) TieneUnos() bool {
+func (matrizEntrada Matriz) TieneUnos() bool {
 	for i := range matrizEntrada.datos {
 		for j := range matrizEntrada.datos[i] {
 			if matrizEntrada.datos[i][j] {
@@ -178,29 +178,29 @@ func (matrizEntrada *Matriz) TieneUnos() bool {
 }
 
 //NuevaMatriz funcion que crea la matriz y le asigna espacio dato a su ancho x alto
-func NuevaMatriz(ancho int, alto int) *Matriz {
+func NuevaMatriz(ancho int, alto int) Matriz {
 	aux := make([][]bool, ancho)
 
 	for i := range aux {
 		aux[i] = make([]bool, alto)
 	}
 	m := Matriz{datos: aux}
-	return &m
+	return m
 }
 
 //MatrizColumna apartir de una cadena de bytes crea la matriz columna
-func MatrizColumna(matrizEntrada []bool) *Matriz {
+func MatrizColumna(matrizEntrada []bool) Matriz {
 	dat := make([][]bool, len(matrizEntrada))
 	for i, b := range matrizEntrada {
 		dat[i] = make([]bool, 1)
 		dat[i][0] = b
 	}
 	m := Matriz{datos: dat}
-	return &m
+	return m
 }
 
 //ToFile graba una Matriz en un archivo binario
-func (matrizEntrada *Matriz) ToFile(url string) {
+func (matrizEntrada Matriz) ToFile(url string) {
 	file, err := os.Create(url)
 	manejoError(err)
 	defer file.Close()
@@ -230,7 +230,7 @@ func ToMatriz(url string) Matriz {
 	manejoError(err)
 	ancho, err := strconv.Atoi(line[:len(line)-1])
 	manejoError(err)
-	matriz := *NuevaMatriz(ancho, alto)
+	matriz := NuevaMatriz(ancho, alto)
 	for indiceAlto := 0; indiceAlto < alto; indiceAlto++ {
 		line, err = bufferReader.ReadString('\n')
 		manejoError(err)
@@ -244,7 +244,7 @@ func ToMatriz(url string) Matriz {
 }
 
 //ToFileConInfo graba una Matriz en un archivo binario retornando a la vez la información
-func (matrizEntrada *Matriz) ToFileConInfo(url string) {
+func (matrizEntrada Matriz) ToFileConInfo(url string) {
 	file, err := os.Create(url)
 	defer file.Close()
 	if err != nil {

@@ -5,13 +5,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"math/rand"
-	_ "net/http/pprof"
 	"os"
-	"runtime"
-	"runtime/pprof"
 	"strconv"
 	"time"
 )
@@ -54,24 +50,24 @@ func Hamming() {
 	//codificacion = 1035
 	//codificacion := 2060
 	comienzoPrograma := time.Now()
-	/*f, err := os.Create("./cpu.trace")
+	/*f, err := os.Create("./cpuSinPunt.trace")
 	if err != nil {
 		log.Fatal("could not create CPU profile: ", err)
 	}
 	trace.Start(f)
 	defer trace.Stop()*/
-	/*
-		f, err := os.Create("./cpu.profile")
-		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()*/
+
+	/*f, err := os.Create("./cpu.profile")
+	if err != nil {
+		log.Fatal("could not create CPU profile: ", err)
+	}
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()*/
 	//testProteccionDesproteccionArchivoByte()
 	testProteccionDesproteccionArchivo()
 	fmt.Println("Tiempo ejecucion:\t", tiempoStr(time.Now().Sub(comienzoPrograma)))
 
-	f, err := os.Create("./memoria.profile")
+	/*f, err = os.Create("./memoria.profile")
 	if err != nil {
 		log.Fatal("could not create memory profile: ", err)
 	}
@@ -79,7 +75,7 @@ func Hamming() {
 	if err := pprof.WriteHeapProfile(f); err != nil {
 		log.Fatal("could not write memory profile: ", err)
 	}
-	f.Close()
+	f.Close()*/
 	return
 }
 
@@ -162,7 +158,7 @@ func matrizChequeoDeParidadH(codificacion int) *MatrizBytes {
 }
 
 //h metodo que devuelve la matriz que se multiplica para codificar una entrada
-func h(codificacion int) *Matriz {
+func h(codificacion int) Matriz {
 	altoMatriz := codificacion
 	anchoMatriz := bitsParidad(codificacion)
 	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
@@ -236,7 +232,7 @@ func matrizGeneradoraG(codificacion int) *MatrizBytes {
 }
 
 //g Funcion que crea la matriz generadora
-func g(codificacion int) *Matriz {
+func g(codificacion int) Matriz {
 	anchoMatriz := codificacion
 	altoMatriz := bitsInformacion(codificacion)
 	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
@@ -278,7 +274,7 @@ func g(codificacion int) *Matriz {
 }
 
 //r Funcion que crea la matriz decodificadora
-func r(codificacion int) *Matriz {
+func r(codificacion int) Matriz {
 	anchoMatriz := bitsInformacion(codificacion)
 	altoMatriz := codificacion
 	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
@@ -489,6 +485,117 @@ func Proteger(url string, info string, salida string, codificacion int) error {
 		return nil
 	}
 	return fmt.Errorf("El archivo no existe, %s", url)
+}
+
+func readFile(url, info string, tamBuf, codificacion int, canalAProcesar chan datosAProcesar) {
+	file, err := os.Open(url)
+	manejoError(err)
+	defer file.Close()
+
+	bufferReader := bufio.NewReader(file)
+	buf := make([]byte, tamBuf)
+
+	byteLeidos, err := bufferReader.Read(buf)
+	if byteLeidos != 0 {
+		manejoError(err)
+	}
+	contadorBloques := 0
+	for byteLeidos > 0 {
+		contadorBloques++
+		canalAProcesar <- datosAProcesar{datos: buf, bytesLeidos: byteLeidos}
+		if byteLeidos < len(buf) {
+			break
+		}
+		byteLeidos, err = bufferReader.Read(buf)
+		if byteLeidos != 0 {
+			manejoError(err)
+		}
+	}
+	close(canalAProcesar)
+	escribirInfo(info, codificacion, contadorBloques, byteLeidos)
+
+}
+func escribirInfo(path string, codificacion, contadorBloques, byteLeidos int) {
+	fileOinfo, err := os.Create(path)
+	manejoError(err)
+	fileOinfo.Close()
+	fileOinfo, err = os.OpenFile(path, os.O_WRONLY, 0666)
+	manejoError(err)
+
+	fileOinfo.WriteString(fmt.Sprintf("%v\n%v\n%v\n", codificacion, contadorBloques, byteLeidos))
+	fileOinfo.Close()
+}
+
+type datosAProcesar struct {
+	datos       []byte
+	bytesLeidos int
+}
+
+func procesarCanal(codificacion int, canalAProcesar chan datosAProcesar, canalDatos chan []byte) {
+	matrizG := g(codificacion)
+	for d := range canalAProcesar {
+		arbool := ByteToBool(d.datos)
+		auxMatriz := MatrizColumna(arbool)
+		b, m := matrizG.MultiplicarOpt(auxMatriz)
+		if !b {
+			bin := m.ToByte()
+			if d.bytesLeidos+1 < codificacion/8 {
+				marcador := d.bytesLeidos + bitsParidad(d.bytesLeidos*8)/8
+				if bitsParidad(d.bytesLeidos*8)%8 != 0 {
+					marcador++
+				}
+				bin = bin[:marcador]
+			}
+			canalDatos <- bin
+		}
+
+	}
+	close(canalDatos)
+}
+
+func writeFile(salida string, canalDatos chan []byte, semaforo chan bool) {
+	fileO, err := os.Create(salida)
+	manejoError(err)
+	fileO.Close()
+	fileO, err = os.OpenFile(salida, os.O_WRONLY, 0666)
+	manejoError(err)
+	defer fileO.Close()
+	bufferWriter := bufio.NewWriter(fileO)
+
+	for bin := range canalDatos {
+		if len(bin)+1 > bufferWriter.Available() {
+			bufferWriter.Flush()
+		}
+		numB, err := bufferWriter.Write(bin)
+		if numB == 0 {
+			fmt.Println("No se escribio nada")
+		}
+		manejoError(err)
+	}
+	bufferWriter.Flush()
+	semaforo <- true
+}
+
+//ProtegerChan funcion que toma de entrada el path de un archivo y lo codifica segun un valor de entrada utilizando canales
+func ProtegerChan(url string, info string, salida string, codificacion int) error {
+	if !(codificacion == 2060 || codificacion == 1035 || codificacion == 522) {
+		return fmt.Errorf("error:no corresponde a una codificacion aceptada, %v", codificacion)
+	}
+	if existeArchivo(url) {
+		canalDatos := make(chan []byte)
+		canalAProcesar := make(chan datosAProcesar)
+		semaforo := make(chan bool)
+		go readFile(url, info, informacion[codificacion]/8, codificacion, canalAProcesar)
+		go procesarCanal(codificacion, canalAProcesar, canalDatos)
+		go writeFile(salida, canalDatos, semaforo)
+		c := <-semaforo
+		fmt.Println(c)
+		return nil
+
+	} else {
+		return fmt.Errorf("El archivo no existe, %s", url)
+
+	}
 }
 
 //Desproteger le doy un url de entrada y uno de salida
@@ -845,7 +952,7 @@ func TieneErrores(url string, info string) (bool, int, int) {
 				hM = h(marcardor)
 			}
 			auxMatriz := MatrizColumna(auxBool)
-			b, sindrome := hM.Multiplicar(auxMatriz)
+			b, sindrome := hM.MultiplicarOpt(auxMatriz)
 			if !b {
 				if sindrome.TieneUnos() {
 					auxInt := 0
@@ -980,12 +1087,12 @@ func testProteccionDesproteccionArchivo() {
 		//{"./alicia.txt", "./alicia.ham", "./alicia.haminfo", "./aliciaDesprotegido.txt"},
 		{"./biblia.txt", "./biblia.ham", "./biblia.haminfo", "./bibliaDesprotegido.txt"},
 	}
-	var codificacionesPosibles = []int{522, 1035, 2060} //522, 1035,
+	var codificacionesPosibles = []int{522} //, 1035, 2060
 	for _, tuplaArchivos := range archivosPrueba {
 		for _, codificacion := range codificacionesPosibles {
 			ahora := time.Now()
 			fmt.Printf("%s\t%s\tCodificacion:%v \n", tiempo(), tuplaArchivos.archivoEntrada, codificacion)
-			error := Proteger(tuplaArchivos.archivoEntrada, tuplaArchivos.archivoProtegidoInfo, tuplaArchivos.archivoProtegido, codificacion)
+			error := ProtegerChan(tuplaArchivos.archivoEntrada, tuplaArchivos.archivoProtegidoInfo, tuplaArchivos.archivoProtegido, codificacion)
 			manejoError(error)
 			fmt.Printf("%s\t\tDesprotejo\n", tiempo())
 			error = Desproteger(tuplaArchivos.archivoProtegido, tuplaArchivos.archivoProtegidoInfo, tuplaArchivos.archivoDesprotegido)
@@ -1047,8 +1154,8 @@ func testProteccionArchivosTieneErrores() {
 		archivoEntrada string
 		archivoSalida  string
 	}{
-		//{"./prueba.txt", "./prueba.ham"},
-		{"./alicia.txt", "./alicia.ham"},
+		{"./prueba.txt", "./prueba.ham"},
+		//{"./alicia.txt", "./alicia.ham"},
 		//	{"./biblia.txt", "./biblia.ham"},
 	}
 	var codificacionesPosibles = []int{522, 1035, 2060} //
