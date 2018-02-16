@@ -1,11 +1,9 @@
 package hamming
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"sync"
 )
 
@@ -36,62 +34,6 @@ func (matrizEntrada Matriz) ToByte() []byte {
 		auxB[indice] = auxByte
 	}
 	return auxB
-}
-
-//ToString funcion que convierte una matriz en un string para imprimir en consola
-func (matrizEntrada Matriz) ToString() string {
-	var resultado string
-	var aux uint64
-	var contador uint64
-	for _, r := range matrizEntrada.datos {
-		for _, d := range r {
-			if d {
-				aux = aux | (1 << contador)
-			}
-			contador++
-			if contador%64 == 0 {
-				resultado = resultado + fmt.Sprintf("%v", aux)
-				aux = 0
-				contador = 0
-			}
-		}
-		if contador != 0 {
-			resultado = resultado + fmt.Sprintf("%v\n", aux)
-			aux = 0
-			contador = 0
-		}
-	}
-	return resultado
-}
-
-//GenerarMatrizViaString apartir de un String, su ancho y alto genera la matriz correspodiente, estando codificada en 64 bits la matriz
-/*func GenerarMatrizViaString(cadenaMatriz string, ancho, alto int) Matriz {
-	matriz := NuevaMatriz(ancho, alto)
-	bits := strings.Split(cadenaMatriz, " ")
-	for indiceAlto := 0; indiceAlto < alto; indiceAlto++ {
-		for indiceAncho := 0; indiceAncho < ancho; indiceAncho++ {
-
-		}
-	}
-	return *matriz
-}
-*/
-//ToStringConInfo funcion que convierte una matriz en un string para imprimir en consola
-func (matrizEntrada Matriz) ToStringConInfo() string {
-	var resultado string
-	fmt.Println(fmt.Sprintf("M: %v, N: %v", len(matrizEntrada.datos), len(matrizEntrada.datos[0])))
-	for _, r := range matrizEntrada.datos {
-		resultado = resultado + "|"
-		for _, d := range r {
-			if d {
-				resultado = resultado + "1"
-			} else {
-				resultado = resultado + "0"
-			}
-		}
-		resultado = resultado + "|\n"
-	}
-	return resultado
 }
 
 //Multiplicar Funcion que multiplica dos matrices y devuelve sus resultado
@@ -125,7 +67,9 @@ func (matrizEntrada Matriz) Multiplicar(mE Matriz) (bool, Matriz) {
 }
 
 //MultiplicarOpt Funcion que multiplica dos matrices y devuelve sus resultado
-func (matrizEntrada Matriz) MultiplicarOpt(mE Matriz) (bool, Matriz) {
+func (matrizEntrada Matriz) MultiplicarOpt(mE Matriz) (Matriz, error) {
+	labError := "Error:no hay datos cargados en las matrices."
+
 	if matrizEntrada.datos != nil || matrizEntrada.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {
 		nO := len(matrizEntrada.datos[0])
 		mEn := len(mE.datos)
@@ -148,16 +92,15 @@ func (matrizEntrada Matriz) MultiplicarOpt(mE Matriz) (bool, Matriz) {
 
 			}
 			w.Wait()
-			return false, aux
+			return aux, nil
 		}
 
-		fmt.Println("Error:El ancho y el alto de las matrices no concuerdan", nO, mEn)
-	} else {
-		fmt.Println("Error:no hay datos cargados en las matrices.")
+		labError = fmt.Sprint("Error:El ancho y el alto de las matrices no concuerdan", nO, mEn)
 	}
+
 	c := [][]bool{{}}
 	var v = Matriz{datos: c}
-	return true, v
+	return v, fmt.Errorf(labError)
 }
 
 func (matrizEntrada Matriz) xor(k, j int, valor bool) {
@@ -180,7 +123,6 @@ func (matrizEntrada Matriz) TieneUnos() bool {
 //NuevaMatriz funcion que crea la matriz y le asigna espacio dato a su ancho x alto
 func NuevaMatriz(ancho int, alto int) Matriz {
 	aux := make([][]bool, ancho)
-
 	for i := range aux {
 		aux[i] = make([]bool, alto)
 	}
@@ -197,6 +139,63 @@ func MatrizColumna(matrizEntrada []bool) Matriz {
 	}
 	m := Matriz{datos: dat}
 	return m
+}
+
+//ToString funcion que convierte una matriz en un string para imprimir en consola
+func (matrizEntrada Matriz) ToString() string {
+	var resultado string
+	var aux uint64
+	var contador uint64
+	for _, r := range matrizEntrada.datos {
+		for _, d := range r {
+			if d {
+				aux = aux | (1 << contador)
+			}
+			contador++
+			if contador%64 == 0 {
+				resultado = resultado + fmt.Sprintf("%v", aux)
+				aux = 0
+				contador = 0
+			}
+		}
+		if contador != 0 {
+			resultado = resultado + fmt.Sprintf("%v", aux) //\n
+			aux = 0
+			contador = 0
+		}
+	}
+	return resultado
+}
+
+//ToStringConInfo funcion que convierte una matriz en un string para imprimir en consola
+func (matrizEntrada Matriz) ToStringConInfo() string {
+	var resultado string
+	fmt.Println(fmt.Sprintf("M: %v, N: %v", len(matrizEntrada.datos), len(matrizEntrada.datos[0])))
+	for _, r := range matrizEntrada.datos {
+		resultado = resultado + "|"
+		for _, d := range r {
+			if d {
+				resultado = resultado + "1"
+			} else {
+				resultado = resultado + "0"
+			}
+		}
+		resultado = resultado + "|\n"
+	}
+	return resultado
+}
+
+//ByteToBool convierte un arreglo de byte's en uno de booleanos
+func ByteToBool(entrada []byte) []bool {
+	auxB := make([]bool, len(entrada)*8)
+	for i, b := range entrada {
+		m := []byte{1, 2, 4, 8, 16, 32, 64, 128}
+		for j := 0; j < 8; j++ {
+			auxB[i*8+j] = ((b & m[j]) != 0)
+		}
+	}
+	return auxB
+
 }
 
 //ToFile graba una Matriz en un archivo binario
@@ -216,33 +215,6 @@ func (matrizEntrada Matriz) ToFile(url string) {
 	return
 }
 
-//ToMatriz carga la matriz desde un archivo
-func ToMatriz(url string) Matriz {
-	archivo, err := os.Open(url)
-	manejoError(err)
-	defer archivo.Close()
-	bufferReader := bufio.NewReader(archivo)
-	line, err := bufferReader.ReadString('\n')
-	manejoError(err)
-	alto, err := strconv.Atoi(line[:len(line)-1])
-	manejoError(err)
-	line, err = bufferReader.ReadString('\n')
-	manejoError(err)
-	ancho, err := strconv.Atoi(line[:len(line)-1])
-	manejoError(err)
-	matriz := NuevaMatriz(ancho, alto)
-	for indiceAlto := 0; indiceAlto < alto; indiceAlto++ {
-		line, err = bufferReader.ReadString('\n')
-		manejoError(err)
-		for indiceAncho, caracter := range line {
-			valor, err := strconv.Atoi(string(caracter))
-			manejoError(err)
-			matriz.datos[indiceAlto][indiceAncho] = valor == 1
-		}
-	}
-	return matriz
-}
-
 //ToFileConInfo graba una Matriz en un archivo binario retornando a la vez la información
 func (matrizEntrada Matriz) ToFileConInfo(url string) {
 	file, err := os.Create(url)
@@ -254,31 +226,9 @@ func (matrizEntrada Matriz) ToFileConInfo(url string) {
 	return
 }
 
-//ByteToBool convierte un arreglo de byte's en uno de booleanos
-func ByteToBool(entrada []byte) []bool {
-	auxB := make([]bool, len(entrada)*8)
-	for i, b := range entrada {
-		auxB[i*8] = ((b & 1) != 0)
-		auxB[i*8+1] = ((b & 2) != 0)
-		auxB[i*8+2] = ((b & 4) != 0)
-		auxB[i*8+3] = ((b & 8) != 0)
-		auxB[i*8+4] = ((b & 16) != 0)
-		auxB[i*8+5] = ((b & 32) != 0)
-		auxB[i*8+6] = ((b & 64) != 0)
-		auxB[i*8+7] = ((b & 128) != 0)
-
-	}
-	return auxB
-
-}
-
-func compararMatrices(matriz1, matriz2 Matriz) bool {
-	ancho1 := len(matriz1.datos)
-	ancho2 := len(matriz2.datos)
-	alto1 := len(matriz1.datos[0])
-	alto2 := len(matriz2.datos[0])
-	if ancho1 != ancho2 || alto1 != alto2 {
-		return false
-	}
-	return true
+//ByteToMatriz genera una matriz columna apartir de un slice de bytes
+func ByteToMatriz(entrada []byte) Matriz {
+	entradaBool := ByteToBool(entrada)
+	matrizEntrada := MatrizColumna(entradaBool)
+	return matrizEntrada
 }
