@@ -13,9 +13,9 @@ import (
 )
 
 var paridad = map[int]int{
-	512:  10,
-	1024: 11,
-	2048: 12,
+	528:  10,
+	1040: 11,
+	2060: 12,
 }
 
 //Hamming es el programa de prueba
@@ -63,7 +63,12 @@ func Proteger(url string, salida string, codificacion int) error {
 		fileTemp, err := ioutil.TempFile("", "./ham")
 		manejoError(err)
 		archivoTemporal = fileTemp.Name()
-		fileOut, err := os.OpenFile(salida, os.O_WRONLY, 0666)
+
+		fileOut, err := os.Create(salida)
+		manejoError(err)
+
+		fileOut.Close()
+		fileOut, err = os.OpenFile(salida, os.O_WRONLY, 0666)
 		manejoError(err)
 		defer fileOut.Close()
 		defer os.Remove(fileTemp.Name())
@@ -71,37 +76,35 @@ func Proteger(url string, salida string, codificacion int) error {
 		bufferReader := bufio.NewReader(file)
 		bufferWriter := bufio.NewWriter(fileTemp)
 		buf := make([]byte, codificacion/8)
-		matrizG := g(codificacion + bitsParidad(codificacion))
+		//matrizG := matrizGeneradora(codificacion)
 
 		byteLeidos, err := bufferReader.Read(buf)
 		if byteLeidos != 0 {
 			manejoError(err)
 		}
-		numB := 0
 		contadorBloques := 0
 		for err != io.EOF {
-			matrizEntrada := ByteToMatriz(buf)
-			codificado, err := matrizG.MultiplicarOpt(matrizEntrada)
-			manejoError(err)
-
 			contadorBloques++
-			codificadoByte := codificado.ToByte()
-			if byteLeidos+1 < codificacion/8 {
-				marcador := byteLeidos + bitsParidad(byteLeidos*8)/8
-				if bitsParidad(byteLeidos*8)%8 != 0 {
-					marcador++
-				}
-				codificadoByte = codificadoByte[:marcador]
-			}
-			if len(codificadoByte)+1 > bufferWriter.Available() {
-				bufferWriter.Flush()
-			}
-			numB, err = bufferWriter.Write(codificadoByte)
-			manejoError(err)
+			/*
+				matrizEntrada := ByteToMatriz(buf)
+				codificado, err := matrizG.MultiplicarOpt(matrizEntrada)
+				manejoError(err)
 
-			if numB == 0 {
-				fmt.Println(contadorBloques, ":No se escribio nada")
-			}
+				codificadoByte := codificado.ToByte()
+				if byteLeidos+2 < codificacion/8 {
+					marcador := byteLeidos + bitsParidad(byteLeidos*8)/8
+					if bitsParidad(byteLeidos*8)%8 != 0 {
+						marcador++
+					}
+					codificadoByte = codificadoByte[:marcador]
+				}
+				if len(codificadoByte)+1 > bufferWriter.Available() {
+					bufferWriter.Flush()
+				}
+			*/
+			codificadoByte := codificar(buf)
+			_, err = bufferWriter.Write(codificadoByte)
+			manejoError(err)
 			if byteLeidos < len(buf) {
 				break
 			}
@@ -119,11 +122,20 @@ func Proteger(url string, salida string, codificacion int) error {
 	}
 	return fmt.Errorf("El archivo no existe, %s", url)
 }
+func codificar(buf []byte) []byte {
+	matrizG := matrizGeneradora(len(buf) * 8)
+	matrizEntrada := ByteToMatriz(buf)
+	matrizResultante, err := matrizG.MultiplicarOpt(matrizEntrada)
+	manejoError(err)
+	codificadoByte := matrizResultante.ToByte()
+	return codificadoByte
+}
 
-//g Funcion que crea la matriz generadora
-func g(codificacion int) Matriz {
-	anchoMatriz := codificacion
-	altoMatriz := bitsInformacion(codificacion)
+//matrizGeneradora Funcion que crea la matriz generadora
+// tomando la cantidad de bits de informacion que hay
+func matrizGeneradora(codificacion int) Matriz {
+	anchoMatriz := codificacion + bitsParidad(codificacion)
+	altoMatriz := codificacion
 	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
 	indiceFilaIdentidad := 0
 	p := -1
@@ -178,43 +190,43 @@ func Desproteger(url string, salida string) error {
 	bufferWriter := bufio.NewWriter(fileO)
 
 	codificacion, bloqueCodificados, bitsUltimo := obtenerInformacion(bufferReader)
+	//codificacion, bloqueCodificados, bitsUltimo := obtenerInformacion(bufferReader)
 
 	tamBuf := (codificacion)/8 + 2
 	buf := make([]byte, tamBuf)
-	r := r(tamBuf * 8)
+	//r := matrizDecodificadora(tamBuf * 8)
 
 	byteLeidos, err := bufferReader.Read(buf)
 	if byteLeidos != 0 {
 		manejoError(err)
 	}
-	contadorBloques := 0
 	for bloqueCodificados != 0 {
 		bloqueCodificados--
-		entradaBool := (ByteToBool(buf))
-		matrizEntrada := MatrizColumna(entradaBool)
-		decodificado, err := r.MultiplicarOpt(matrizEntrada)
-		manejoError(err)
+		/*
+			entradaBool := (ByteToBool(buf))
+			matrizEntrada := MatrizColumna(entradaBool)
+			decodificado, err := r.MultiplicarOpt(matrizEntrada)
+			manejoError(err)
 
-		contadorBloques++
-		decodificadoBytes := decodificado.ToByte()
+			contadorBloques++
+			decodificadoBytes := decodificado.ToByte()
+			if bloqueCodificados == 0 {
+				decodificadoBytes = decodificadoBytes[:bitsUltimo]
+			} else {
+				decodificadoBytes = decodificadoBytes[:codificacion/8]
+			}*/
+		decodificadoBytes := decodificar(buf)
 		if bloqueCodificados == 0 {
 			decodificadoBytes = decodificadoBytes[:bitsUltimo]
-		} else {
-			decodificadoBytes = decodificadoBytes[:codificacion/8]
 		}
-		numB, err := bufferWriter.Write(decodificadoBytes)
+		_, err := bufferWriter.Write(decodificadoBytes)
+		manejoError(err)
 
 		if bufferWriter.Available() < len(decodificadoBytes) {
 			bufferWriter.Flush()
 		}
-		if numB == 0 {
-			fmt.Println(contadorBloques, ":No se escribio nada")
-		}
-		manejoError(err)
 		byteLeidos, err = bufferReader.Read(buf)
-		if byteLeidos != 0 {
-			manejoError(err)
-		}
+		manejoError(err)
 		if byteLeidos < len(buf) {
 			buf2 := make([]byte, tamBuf-byteLeidos)
 			byteLeidos2, err := bufferReader.Read(buf2)
@@ -223,15 +235,27 @@ func Desproteger(url string, salida string) error {
 			}
 			buf = buf[:byteLeidos]
 			buf = append(buf, buf2...)
-
 		}
 	}
 	bufferWriter.Flush()
 	return nil
 }
 
-//r Funcion que crea la matriz decodificadora
-func r(codificacion int) Matriz {
+func decodificar(buf []byte) []byte {
+	tamBuf := len(buf)
+	entradaBool := (ByteToBool(buf))
+	matrizEntrada := MatrizColumna(entradaBool)
+	r := matrizDecodificadora(tamBuf * 8)
+	decodificado, err := r.MultiplicarOpt(matrizEntrada)
+	manejoError(err)
+	decodificadoBytes := decodificado.ToByte()
+	decodificadoBytes = decodificadoBytes[:tamBuf-2]
+
+	return decodificadoBytes
+}
+
+//matrizDecodificadora Funcion que crea la matriz decodificadora
+func matrizDecodificadora(codificacion int) Matriz {
 	anchoMatriz := bitsInformacion(codificacion)
 	altoMatriz := codificacion
 	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
@@ -255,9 +279,12 @@ func TieneErrores(url string) (bool, int, int) {
 		codificacion, bloqueCodificados, bitsUltimo := obtenerInformacion(bufferReader)
 
 		buf := make([]byte, (codificacion)/8+2)
-		tamEscrito := codificacion + bitsParidad(codificacion)
+		tamEscrito := ((codificacion)/8 + 2) * 8
+		//	tamEscrito := codificacion + bitsParidad(codificacion)
+
 		tamUltimo := bitsUltimo*8 + bitsParidad(bitsUltimo*8)
-		matrizChequeo := h(tamEscrito)
+		tamUltimo += tamUltimo % 8
+		matrizChequeo := matrizChequeoParidad(tamEscrito)
 
 		byteLeidos, err := bufferReader.Read(buf)
 		if byteLeidos != 0 {
@@ -265,12 +292,12 @@ func TieneErrores(url string) (bool, int, int) {
 		}
 
 		contadorBloques := 0
-		for bloqueCodificados != 0 {
-			bloqueCodificados--
+		for contadorBloques != bloqueCodificados {
+			contadorBloques++
 			entradaBool := (ByteToBool(buf))
-			if bloqueCodificados == 0 {
+			if bloqueCodificados == contadorBloques {
 				entradaBool = entradaBool[:tamUltimo]
-				matrizChequeo = h(tamUltimo)
+				matrizChequeo = matrizChequeoParidad(tamUltimo)
 			} else {
 				entradaBool = entradaBool[:tamEscrito]
 			}
@@ -280,26 +307,20 @@ func TieneErrores(url string) (bool, int, int) {
 				manejoError(fmt.Errorf("tieneErrror: error al multiplicar matrices, %s", err))
 			}
 			if sindrome.TieneUnos() {
-
-				auxInt := 0
-				for i, fila := range sindrome.datos {
-					mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1028, 2048}
-					if fila[0] {
-						auxInt = auxInt | mascara[i]
-					}
-				}
-				auxInt = auxInt - 1
-				resultado2 := errorEnSindrome(sindrome.datos)
-				fmt.Println("Menor-Mayor matriz: ", auxInt, " Mayor-Menor matriz: ", resultado2)
-				if bloqueCodificados == 0 {
-					fmt.Println("Tamaño ultimo", tamUltimo)
+				auxInt := errorEnSindrome(sindrome.datos)
+				resultado2 := errorEnSindromeM(sindrome.datos)
+				fmt.Println("Tamaño ultimo", tamUltimo, "ByteLeidos ", byteLeidos)
+				if bloqueCodificados == contadorBloques {
 					if auxInt < tamUltimo {
+						fmt.Println(contadorBloques, ": Menor-Mayor matriz: ", auxInt, "Mayor-Menor matriz: ", resultado2, " Tamaño ultimo: ", tamUltimo)
+						fmt.Println("---EL ERROR OCURRE ACA---")
 						return true, contadorBloques, auxInt
 					}
 				} else {
-					fmt.Println("Tamaño escrito", tamEscrito)
-
-					return true, contadorBloques, auxInt
+					if auxInt < tamEscrito {
+						fmt.Println("+++EL ERROR OCURRE ACA+++")
+						return true, contadorBloques, auxInt
+					}
 				}
 			}
 			byteLeidos, err = bufferReader.Read(buf)
@@ -314,8 +335,8 @@ func TieneErrores(url string) (bool, int, int) {
 				}
 				buf = buf[:byteLeidos]
 				buf = append(buf, buf2...)
+				byteLeidos += byteLeidos2
 			}
-			contadorBloques++
 		}
 	} else {
 		fmt.Println("No existe el archivo ", url)
@@ -325,8 +346,24 @@ func TieneErrores(url string) (bool, int, int) {
 
 func errorEnSindrome(sindrome [][]bool) int {
 	auxInt := 0
+	//mascara := []int{2048, 1028, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1}
+	//mascara = mascara[12-len(sindrome):]
+	mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1028, 2048}
+
+	for i, b := range sindrome {
+		if b[0] {
+			auxInt = auxInt | mascara[i]
+		}
+	}
+	auxInt = auxInt - 1
+	return auxInt
+}
+func errorEnSindromeM(sindrome [][]bool) int {
+	auxInt := 0
 	mascara := []int{2048, 1028, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1}
 	mascara = mascara[12-len(sindrome):]
+	//mascara := []int{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1028, 2048}
+
 	for i, b := range sindrome {
 		if b[0] {
 			auxInt = auxInt | mascara[i]
@@ -336,8 +373,8 @@ func errorEnSindrome(sindrome [][]bool) int {
 	return auxInt
 }
 
-//h metodo que devuelve la matriz que se multiplica para codificar una entrada, matriz de chequeo
-func h(codificacion int) Matriz {
+//matrizChequeoParidad metodo que devuelve la matriz que se multiplica para codificar una entrada, matriz de chequeo
+func matrizChequeoParidad(codificacion int) Matriz {
 	altoMatriz := codificacion
 	anchoMatriz := bitsParidad(codificacion)
 	matriz := NuevaMatriz(anchoMatriz, altoMatriz)

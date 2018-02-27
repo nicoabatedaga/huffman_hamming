@@ -18,9 +18,12 @@ func TestProteccionDesproteccionArchivo(t *testing.T) {
 		archivoProtegido    string
 		archivoDesprotegido string
 	}{
-	//	{"./prueba.txt", "./prueba.ham", "./pruebaDesprotegido.txt"},
-	//	{"./alicia.txt", "./alicia.ham", "./aliciaDesprotegido.txt"},
-	//	{"./biblia.txt", "./biblia.ham", "./bibliaDesprotegido.txt"},
+		{"./prueba.txt", "./prueba.ham", "./pruebaDesprotegido.txt"},
+		{"./alicia.txt", "./alicia.ham", "./aliciaDesprotegido.txt"},
+		{"./biblia.txt", "./biblia.ham", "./bibliaDesprotegido.txt"},
+		{"./moby.txt", "./moby.ham", "./mobyDesprotegido.txt"},
+		{"./metamorfosis.txt", "./metamorfosis.ham", "./metamorfosisDesprotegido.txt"},
+		{"./hyde.txt", "./hyde.ham", "./hydeDesprotegido.txt"},
 	}
 	var codificacionesPosibles = []int{512, 1024, 2048} //, 1024, 2048
 	for _, tuplaArchivos := range archivosPrueba {
@@ -34,6 +37,7 @@ func TestProteccionDesproteccionArchivo(t *testing.T) {
 			manejoError(error)
 			if !compararArchivos(tuplaArchivos.archivoEntrada, tuplaArchivos.archivoDesprotegido) {
 				fmt.Printf("\tError en el %s para la codificacion %d\tduracion:%s\n", tuplaArchivos.archivoEntrada, codificacion, tiempoStr(time.Now().Sub(ahora)))
+				t.Errorf("\tError en el %s para la codificacion %d\t\n", tuplaArchivos.archivoEntrada, codificacion)
 			} else {
 				fmt.Printf("\tExito en el %s para la codificacion %d\tduracion:%s\n", tuplaArchivos.archivoEntrada, codificacion, tiempoStr(time.Now().Sub(ahora)))
 			}
@@ -61,8 +65,11 @@ func TestCorregirError(t *testing.T) {
 		archivoDesprotegido string
 	}{
 	//	{"./prueba.txt", "./prueba.ham", "./pruebaConError.ham", "./pruebaCorregido.ham", "./pruebaDesprotegido.txt"},
-	//{"./alicia.txt", "./alicia.ham","./aliciaConError.ham" ,"./aliciaCorregido.ham" ,"./aliciaDesprotegido.txt"},
-	///{"./biblia.txt", "./biblia.ham", "./bibliaConError.ham"  ,"./bibliaCorregido.ham" ,"./bibliaDesprotegido.txt"},
+	//	{"./alicia.txt", "./alicia.ham", "./aliciaConError.ham", "./aliciaCorregido.ham", "./aliciaDesprotegido.txt"},
+	//	{"./biblia.txt", "./biblia.ham", "./bibliaConError.ham", "./bibliaCorregido.ham", "./bibliaDesprotegido.txt"},
+	//	{"./moby.txt", "./moby.ham", "./mobyConError.ham", "./mobyCorregido.ham", "./mobyDesprotegido.txt"},
+	//	{"./metamorfosis.txt", "./metamorfosis.ham", "./metamorfosisConError.ham", "./metamorfosisCorregido.ham", "./metamorfosisDesprotegido.txt"},
+	//	{"./hyde.txt", "./hyde.ham", "./hydeConError.ham", "./hydeCorregido.ham", "./hydeDesprotegido.txt"},
 	}
 	var codificacionesPosibles = []int{512} //, 1024, 2048
 	for _, tuplaArchivos := range archivosPrueba {
@@ -92,11 +99,14 @@ func TestProteccionArchivosTieneErrores(t *testing.T) {
 		archivoEntrada string
 		archivoSalida  string
 	}{
-		//{"./prueba.txt", "./prueba.ham"},
-		{"./alicia.txt", "./alicia.ham"},
-		//{"./biblia.txt", "./biblia.ham"},
+	//	{"./prueba.txt", "./prueba.ham"},
+	//	{"./alicia.txt", "./alicia.ham"},
+	//	{"./biblia.txt", "./biblia.ham"},
+	//	{"./moby.txt", "./moby.ham"},
+	//	{"./metamorfosis.txt", "./metamorfosis.ham"},
+	//	{"./hyde.txt", "./hyde.ham"},
 	}
-	var codificacionesPosibles = []int{512} //512, 1024, 2048
+	var codificacionesPosibles = []int{512, 1024, 2048} //512, 1024, 2048
 	for _, parArchivos := range archivosPrueba {
 		for _, codificacion := range codificacionesPosibles {
 			fmt.Printf("%s\t%s\tCodificacion:%v \n", tiempo(), parArchivos.archivoEntrada, codificacion)
