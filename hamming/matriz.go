@@ -12,28 +12,40 @@ type Matriz struct {
 	datos [][]bool
 }
 
+//ByteToBool convierte un arreglo de byte's en uno de booleanos
+func ByteToBool(entrada []byte) []bool {
+	salida := make([]bool, len(entrada)*8)
+	mascara := []byte{128, 64, 32, 16, 8, 4, 2, 1}
+	for indice, b := range entrada {
+		for j := 0; j < 8; j++ {
+			salida[indice*8+j] = ((b & mascara[j]) != 0)
+		}
+	}
+	return salida
+
+}
+
 //ToByte transforma una matriz en un arreglo de bytes (solo funciona para las matrices columna)
 func (matrizEntrada Matriz) ToByte() []byte {
-	ancho := len(matrizEntrada.datos)
-	alto := len(matrizEntrada.datos[0])
-	tam := ancho * alto / 8
-	if (ancho*alto)%8 != 0 {
+	tamEntrada := len(matrizEntrada.datos)
+	tam := tamEntrada / 8
+	if (tamEntrada)%8 != 0 {
 		tam++
 	}
-	auxB := make([]byte, tam)
-	for indice := range auxB {
+	salida := make([]byte, tam)
+	for indice := range salida {
 		var auxByte byte
-		mascara := []byte{1, 2, 4, 8, 16, 32, 64, 128}
+		mascara := []byte{128, 64, 32, 16, 8, 4, 2, 1}
 		for i, n := range mascara {
-			if indice*8+i < ancho {
+			if indice*8+i < tamEntrada {
 				if matrizEntrada.datos[indice*8+i][0] {
 					auxByte = auxByte | n
 				}
 			}
 		}
-		auxB[indice] = auxByte
+		salida[indice] = auxByte
 	}
-	return auxB
+	return salida
 }
 
 //Multiplicar Funcion que multiplica dos matrices y devuelve sus resultado
@@ -183,19 +195,6 @@ func (matrizEntrada Matriz) ToStringConInfo() string {
 		resultado = resultado + "|\n"
 	}
 	return resultado
-}
-
-//ByteToBool convierte un arreglo de byte's en uno de booleanos
-func ByteToBool(entrada []byte) []bool {
-	auxB := make([]bool, len(entrada)*8)
-	for i, b := range entrada {
-		m := []byte{1, 2, 4, 8, 16, 32, 64, 128}
-		for j := 0; j < 8; j++ {
-			auxB[i*8+j] = ((b & m[j]) != 0)
-		}
-	}
-	return auxB
-
 }
 
 //ToFile graba una Matriz en un archivo binario

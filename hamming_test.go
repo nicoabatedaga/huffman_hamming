@@ -22,7 +22,7 @@ func TestProteccionDesproteccionArchivo(t *testing.T) {
 		{"./alicia.txt", "./alicia.ham", "./aliciaDesprotegido.txt"},
 		{"./biblia.txt", "./biblia.ham", "./bibliaDesprotegido.txt"},
 		{"./moby.txt", "./moby.ham", "./mobyDesprotegido.txt"},
-		{"./metamorfosis.txt", "./metamorfosis.ham", "./metamorfosisDesprotegido.txt"},
+		{"./meta.txt", "./metamorfosis.ham", "./metamorfosisDesprotegido.txt"},
 		{"./hyde.txt", "./hyde.ham", "./hydeDesprotegido.txt"},
 	}
 	var codificacionesPosibles = []int{512, 1024, 2048} //, 1024, 2048
@@ -64,24 +64,23 @@ func TestCorregirError(t *testing.T) {
 		archivoCorregido    string
 		archivoDesprotegido string
 	}{
-	//	{"./prueba.txt", "./prueba.ham", "./pruebaConError.ham", "./pruebaCorregido.ham", "./pruebaDesprotegido.txt"},
-	//	{"./alicia.txt", "./alicia.ham", "./aliciaConError.ham", "./aliciaCorregido.ham", "./aliciaDesprotegido.txt"},
-	//	{"./biblia.txt", "./biblia.ham", "./bibliaConError.ham", "./bibliaCorregido.ham", "./bibliaDesprotegido.txt"},
-	//	{"./moby.txt", "./moby.ham", "./mobyConError.ham", "./mobyCorregido.ham", "./mobyDesprotegido.txt"},
-	//	{"./metamorfosis.txt", "./metamorfosis.ham", "./metamorfosisConError.ham", "./metamorfosisCorregido.ham", "./metamorfosisDesprotegido.txt"},
-	//	{"./hyde.txt", "./hyde.ham", "./hydeConError.ham", "./hydeCorregido.ham", "./hydeDesprotegido.txt"},
+		{"./prueba.txt", "./prueba.ham", "./pruebaConError.ham", "./pruebaCorregido.ham", "./pruebaDesprotegido.txt"},
+		{"./alicia.txt", "./alicia.ham", "./aliciaConError.ham", "./aliciaCorregido.ham", "./aliciaDesprotegido.txt"},
+		{"./biblia.txt", "./biblia.ham", "./bibliaConError.ham", "./bibliaCorregido.ham", "./bibliaDesprotegido.txt"},
+		{"./moby.txt", "./moby.ham", "./mobyConError.ham", "./mobyCorregido.ham", "./mobyDesprotegido.txt"},
+		{"./meta.txt", "./meta.ham", "./metaConError.ham", "./metaCorregido.ham", "./metaDesprotegido.txt"},
+		{"./hyde.txt", "./hyde.ham", "./hydeConError.ham", "./hydeCorregido.ham", "./hydeDesprotegido.txt"},
 	}
-	var codificacionesPosibles = []int{512} //, 1024, 2048
+	var codificacionesPosibles = []int{512, 1024, 2048} //512, 1024, 2048
 	for _, tuplaArchivos := range archivosPrueba {
 		for _, codificacion := range codificacionesPosibles {
 			error := hamming.Proteger(tuplaArchivos.archivoEntrada, tuplaArchivos.archivoProtegido, codificacion)
 			manejoError(error)
-			fmt.Println("-----Introducir Errores")
 			hamming.IntroducirError(tuplaArchivos.archivoProtegido, tuplaArchivos.archivoConError)
-			fmt.Println("-----Corregir Errores")
+
 			hamming.CorregirError(tuplaArchivos.archivoConError, tuplaArchivos.archivoCorregido)
-			fmt.Println("-----Desproteger")
-			hamming.Desproteger(tuplaArchivos.archivoCorregido, tuplaArchivos.archivoDesprotegido)
+			manejoError(error)
+			error = hamming.Desproteger(tuplaArchivos.archivoCorregido, tuplaArchivos.archivoDesprotegido)
 			manejoError(error)
 			if !compararArchivos(tuplaArchivos.archivoEntrada, tuplaArchivos.archivoDesprotegido) {
 				t.Errorf("-Error en el %s para la codificacion %d", tuplaArchivos.archivoEntrada, codificacion)
@@ -91,7 +90,6 @@ func TestCorregirError(t *testing.T) {
 		}
 	}
 }
-
 func TestProteccionArchivosTieneErrores(t *testing.T) {
 	ahora := time.Now()
 	fmt.Println("Test TieneErrores ", ahora)
@@ -99,12 +97,12 @@ func TestProteccionArchivosTieneErrores(t *testing.T) {
 		archivoEntrada string
 		archivoSalida  string
 	}{
-	//	{"./prueba.txt", "./prueba.ham"},
-	//	{"./alicia.txt", "./alicia.ham"},
-	//	{"./biblia.txt", "./biblia.ham"},
-	//	{"./moby.txt", "./moby.ham"},
-	//	{"./metamorfosis.txt", "./metamorfosis.ham"},
-	//	{"./hyde.txt", "./hyde.ham"},
+		{"./prueba.txt", "./prueba.ham"},
+		{"./alicia.txt", "./alicia.ham"},
+		{"./biblia.txt", "./biblia.ham"},
+		{"./moby.txt", "./moby.ham"},
+		{"./meta.txt", "./meta.ham"},
+		{"./hyde.txt", "./hyde.ham"},
 	}
 	var codificacionesPosibles = []int{512, 1024, 2048} //512, 1024, 2048
 	for _, parArchivos := range archivosPrueba {
@@ -131,11 +129,11 @@ func TestProteccionArchivosAgregarErroress(t *testing.T) {
 		archivoSalida   string
 		archivoConError string
 	}{
-	//{"./prueba.txt", "./prueba.ham", "./pruebaConError.ham"},
-	//{"./alicia.txt", "./alicia.ham", "./aliciaConError.ham"},
-	//{"./biblia.txt", "./biblia.ham", "./bibliaConError.ham"},
+		{"./prueba.txt", "./prueba.ham", "./pruebaConError.ham"},
+		{"./alicia.txt", "./alicia.ham", "./aliciaConError.ham"},
+		{"./biblia.txt", "./biblia.ham", "./bibliaConError.ham"},
 	}
-	var codificacionesPosibles = []int{1024} //512,, 2048
+	var codificacionesPosibles = []int{512, 1024, 2048} //512,, 2048
 	for _, parArchivos := range archivosPrueba {
 		for _, codificacion := range codificacionesPosibles {
 			fmt.Printf("%s\t%s\tCodificacion:%v \n", tiempo(), parArchivos.archivoEntrada, codificacion)
@@ -147,10 +145,9 @@ func TestProteccionArchivosAgregarErroress(t *testing.T) {
 			} else {
 				t.Logf("+\tExito:%s(%d)", parArchivos.archivoEntrada, codificacion)
 			}
-			hamming.IntroducirErrorNR(parArchivos.archivoSalida, parArchivos.archivoConError, 0, 9)
+			hamming.IntroducirError(parArchivos.archivoSalida, parArchivos.archivoConError)
 
 			error, bloque, posicion = hamming.TieneErrores(parArchivos.archivoConError)
-			fmt.Println("Tiene errores: ", error, bloque, posicion)
 			if !error {
 				t.Errorf("-\t(IE)Error:%s(%d)", parArchivos.archivoEntrada, codificacion)
 			} else {
@@ -187,6 +184,12 @@ func compararArchivos(path1, path2 string) bool {
 			}
 		}
 		if !bytes.Equal(buffer1, buffer2) {
+			fmt.Println("Comparar ")
+			for i := 0; i < len(buffer1); i++ {
+				if buffer1[i] != buffer2[i] {
+					fmt.Printf("\t%b\t \t%v \n\t%b \t%v\n", buffer1[i], buffer1[i], buffer2[i], buffer2[i])
+				}
+			}
 			return false
 		}
 	}
