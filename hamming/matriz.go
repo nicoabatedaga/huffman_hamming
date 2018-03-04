@@ -12,6 +12,8 @@ type Matriz struct {
 	datos [][]bool
 }
 
+var auxMatriz Matriz
+
 //ByteToBool convierte un arreglo de byte's en uno de booleanos
 func ByteToBool(entrada []byte) []bool {
 	salida := make([]bool, len(entrada)*8)
@@ -78,8 +80,8 @@ func (matrizEntrada Matriz) Multiplicar(mE Matriz) (bool, Matriz) {
 	return true, v
 }
 
-//MultiplicarOpt Funcion que multiplica dos matrices y devuelve sus resultado
-func (matrizEntrada Matriz) MultiplicarOpt(mE Matriz) (Matriz, error) {
+//MultiplicarMO Funcion que multiplica dos matrices y devuelve sus resultado utilizando los 8 procesadores
+func MultiplicarMO(matrizEntrada Matriz, mE Matriz) (Matriz, error) {
 	labError := "Error:no hay datos cargados en las matrices."
 
 	if matrizEntrada.datos != nil || matrizEntrada.datos[0] != nil || mE.datos != nil || mE.datos[0] != nil {
@@ -88,20 +90,22 @@ func (matrizEntrada Matriz) MultiplicarOpt(mE Matriz) (Matriz, error) {
 		if nO == mEn {
 			m := len(matrizEntrada.datos) //alto
 			n := len(mE.datos[0])         //ancho
-			var w sync.WaitGroup
-			w.Add(m)
 			aux := NuevaMatriz(m, n)
-			for k := 0; k < m; k++ { //indiceFila = k
-				go func(k int) {
-					for j := 0; j < n; j++ { //indiceColumna =j
+
+			var w sync.WaitGroup
+			w.Add(8)
+			for g := 0; g < 8; g++ {
+				go func(g int) {
+					for k := g * m / 8; k < (1+g)*m/8; k++ { //indiceFila = k
 						for i := 0; i < nO; i++ { //indice = i
-							valor := matrizEntrada.datos[k][i] && mE.datos[i][j]
-							aux.xor(k, j, valor)
+							valor := matrizEntrada.datos[k][i] && mE.datos[i][0]
+							valorV := aux.datos[k][0]
+							aux.datos[k][0] = valor != valorV
+							//aux.xor(k, 0, valor)
 						}
 					}
 					w.Done()
-				}(k)
-
+				}(g)
 			}
 			w.Wait()
 			return aux, nil
@@ -133,10 +137,10 @@ func (matrizEntrada Matriz) TieneUnos() bool {
 }
 
 //NuevaMatriz funcion que crea la matriz y le asigna espacio dato a su ancho x alto
-func NuevaMatriz(ancho int, alto int) Matriz {
-	aux := make([][]bool, ancho)
+func NuevaMatriz(alto int, ancho int) Matriz {
+	aux := make([][]bool, alto)
 	for i := range aux {
-		aux[i] = make([]bool, alto)
+		aux[i] = make([]bool, ancho)
 	}
 	m := Matriz{datos: aux}
 	return m

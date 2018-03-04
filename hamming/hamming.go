@@ -18,8 +18,31 @@ var paridad = map[int]int{
 	2060: 12,
 }
 
+var matrizG Matriz
+var r Matriz
+var matrizChequeo Matriz
+var matrizEntrada Matriz
+var sindrome Matriz
+var matriz Matriz
+
 //Hamming es el programa de prueba
 func Hamming() {
+	ahora := time.Now()
+	/*f, err := os.Create("trace.out")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	err = trace.Start(f)
+	if err != nil {
+		panic(err)
+	}
+	defer trace.Stop()*/
+	Proteger("./alicia.txt", "./alicia.ham", 2048)
+	TieneErrores("./alicia.ham")
+	Desproteger("./alicia.ham", "./aliciaDes.txt")
+	fmt.Println(time.Now().Sub(ahora))
 	return
 }
 
@@ -75,6 +98,7 @@ func Proteger(url string, salida string, codificacion int) error {
 
 		bufferReader := bufio.NewReader(file)
 		bufferWriter := bufio.NewWriter(fileTemp)
+
 		buf := make([]byte, codificacion/8)
 
 		byteLeidos, err := bufferReader.Read(buf)
@@ -84,6 +108,7 @@ func Proteger(url string, salida string, codificacion int) error {
 		contadorBloques := 0
 		for err != io.EOF {
 			contadorBloques++
+
 			codificadoByte := codificar(buf, byteLeidos)
 			_, err = bufferWriter.Write(codificadoByte)
 			manejoError(err)
@@ -105,9 +130,11 @@ func Proteger(url string, salida string, codificacion int) error {
 	return fmt.Errorf("El archivo no existe, %s", url)
 }
 func codificar(buf []byte, byteLeidos int) []byte {
-	matrizG := matrizGeneradora(byteLeidos * 8)
-	matrizEntrada := ByteToMatriz(buf[:byteLeidos])
-	matrizResultante, err := matrizG.MultiplicarOpt(matrizEntrada)
+	matrizG = matrizGeneradora(byteLeidos * 8)
+	matrizEntrada = ByteToMatriz(buf[:byteLeidos])
+	//	matrizResultante, err := matrizG.MultiplicarOpt(matrizEntrada)
+
+	matrizResultante, err := MultiplicarMO(matrizG, matrizEntrada)
 	manejoError(err)
 	codificadoByte := matrizResultante.ToByte()
 	return codificadoByte
@@ -116,9 +143,13 @@ func codificar(buf []byte, byteLeidos int) []byte {
 //matrizGeneradora Funcion que crea la matriz generadora
 // tomando la cantidad de bits de informacion que hay
 func matrizGeneradora(codificacion int) Matriz {
+	if len(matrizG.datos) == codificacion+bitsParidad(codificacion) {
+		return matrizG
+	}
 	anchoMatriz := codificacion + bitsParidad(codificacion)
 	altoMatriz := codificacion
-	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
+	matriz = matriz.MatrizNueva(anchoMatriz, altoMatriz)
+
 	indiceFilaIdentidad := 0
 	p := -1
 	for indiceColumna := 0; indiceColumna < anchoMatriz; indiceColumna++ {
@@ -204,9 +235,11 @@ func Desproteger(url string, salida string) error {
 func decodificar(buf []byte) []byte {
 	tamBuf := len(buf)
 	entradaBool := (ByteToBool(buf))
-	matrizEntrada := MatrizColumna(entradaBool)
-	r := matrizDecodificadora(tamBuf * 8)
-	decodificado, err := r.MultiplicarOpt(matrizEntrada)
+	matrizEntrada = MatrizColumna(entradaBool)
+	r = matrizDecodificadora(tamBuf * 8)
+	//	decodificado, err := r.MultiplicarOpt(matrizEntrada)
+	decodificado, err := MultiplicarMO(r, matrizEntrada)
+
 	manejoError(err)
 	decodificadoBytes := decodificado.ToByte()
 	decodificadoBytes = decodificadoBytes[:tamBuf-2]
@@ -216,9 +249,12 @@ func decodificar(buf []byte) []byte {
 
 //matrizDecodificadora Funcion que crea la matriz decodificadora
 func matrizDecodificadora(codificacion int) Matriz {
+	if len(r.datos) == bitsInformacion(codificacion) {
+		return r
+	}
 	anchoMatriz := bitsInformacion(codificacion)
 	altoMatriz := codificacion
-	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
+	matriz = matriz.MatrizNueva(anchoMatriz, altoMatriz)
 	indiceColumna := 0
 	for indiceFila := 0; indiceFila < altoMatriz; indiceFila++ {
 		if !esPotenciaDeDos(indiceFila + 1) {
@@ -272,13 +308,13 @@ func TieneErrores(url string) (bool, int, int) {
 }
 
 func errorEnBloque(buf []byte, tam int) (bool, int) {
-	matrizChequeo := matrizChequeoParidad(tam)
+	matrizChequeo = matrizChequeoParidad(tam)
 
 	entradaBool := (ByteToBool(buf))
 	entradaBool = entradaBool[:tam]
 
-	matrizEntrada := MatrizColumna(entradaBool)
-	sindrome, err := matrizChequeo.MultiplicarOpt(matrizEntrada)
+	matrizEntrada = MatrizColumna(entradaBool)
+	sindrome, err := MultiplicarMO(matrizChequeo, matrizEntrada)
 	manejoError(err)
 
 	if sindrome.TieneUnos() {
@@ -305,9 +341,12 @@ func errorEnSindrome(sindrome [][]bool) int {
 
 //matrizChequeoParidad metodo que devuelve la matriz que se multiplica para codificar una entrada, matriz de chequeo
 func matrizChequeoParidad(codificacion int) Matriz {
+	if len(matrizChequeo.datos) == bitsParidad(codificacion) {
+		return matrizChequeo
+	}
 	altoMatriz := codificacion
 	anchoMatriz := bitsParidad(codificacion)
-	matriz := NuevaMatriz(anchoMatriz, altoMatriz)
+	matriz = matriz.MatrizNueva(anchoMatriz, altoMatriz)
 	for i := 0; i < anchoMatriz; i++ {
 		contadorBinario := 1
 		uno := false
@@ -514,4 +553,26 @@ func existeArchivo(pathArchivo string) bool {
 		return true
 	}
 	return false
+}
+
+//MatrizNueva si la matriz ya existe  reinicia los valores,
+//sino la genera
+func (m Matriz) MatrizNueva(ancho, alto int) Matriz {
+	if len(m.datos) != 0 {
+		if ancho <= len(m.datos) && alto <= len(m.datos[0]) {
+			m.datos = m.datos[:ancho]
+			for i := 0; i < ancho; i++ {
+				m.datos[i] = m.datos[i][:alto]
+				for j := 0; j < alto; j++ {
+					m.datos[i][j] = false
+				}
+			}
+		} else {
+			aux := NuevaMatriz(ancho, alto)
+			return aux
+		}
+	}
+	aux := NuevaMatriz(ancho, alto)
+	return aux
+
 }
