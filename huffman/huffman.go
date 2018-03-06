@@ -15,6 +15,7 @@ import (
 var (
 	mapita                      map[string]string
 	mapitaInvertido             map[string]string
+	listaDeCaracteres           []Caracter
 	stringParaMatchearLectura   string
 	counterBits                 int64
 	counterReadBits             int64
@@ -31,8 +32,7 @@ func manejoError(err error) {
 
 func Huffman() {
 	fmt.Println(" - empiezo el huffman - ")
-	// nombreArchivo := "./archivoNuevo"
-	nombreArchivo := "./archivoParaProbar"
+	nombreArchivo := "./archivo"
 	nombreArchivoComprimido := Comprimir(nombreArchivo)
 	fmt.Println(fmt.Sprintf("El archivo comprimido se llama: %v", nombreArchivoComprimido))
 	leoArchivoEnBytes(nombreArchivoComprimido)
@@ -51,22 +51,36 @@ func Huffman() {
 
 func Comprimir(nombreArchivo string) string {
 	nombreArchivoComprimido := nombreArchivo + ".comprimido.huff"
-	var listaDeCaracteres []Caracter
 	listaDeCaracteres = getListaDeCaracteres(recorroArchivoYCuento(nombreArchivo))
 	raizDelArbol := generarArbol(listaDeCaracteres)
 	treeAsMap(raizDelArbol)
 	fmt.Println(fmt.Sprintf("Mapa del arbol: %v", mapita))
-	guardoMapaEnArchivo(nombreArchivo)
+	guardoListaDeCaracteresEnArchivo(nombreArchivo)
 	recorroArchivoYEscriboArchivoCodificado(nombreArchivo, nombreArchivoComprimido)
 	return nombreArchivoComprimido
 }
 
-func guardoMapaEnArchivo(nombreArchivo string) {
-	nombreArchivoMapa = nombreArchivo + ".mapa"
-	archivoEscrituraMapa, err := os.Create(nombreArchivoMapa)
+func guardoListaDeCaracteresEnArchivo(nombreArchivo string) {
+	nombreArchivoListaCaracteres := nombreArchivo + ".listaCaracteres"
+	archivoEscrituraListaCaracteres, err := os.Create(nombreArchivoListaCaracteres)
+	defer archivoEscrituraListaCaracteres.Close()
 	manejoError(err)
-	defer archivoEscrituraMapa.Close()
-	writer := bufio.NewWriter(archivoEscrituraMapa)
+	arr := make([]string, len(mapita))
+	i := 0
+	for k := range mapita {
+		arr[i] = k
+		i++
+	}
+	sort.Strings(arr)
+	writer := bufio.NewWriter(archivoEscrituraListaCaracteres)
+	for _, v := range arr {
+		writer.WriteString(fmt.Sprintf("%v-cod-%v\n", v, mapita[v]))
+	}
+	//for k, v := range mapita {
+	//	writer.WriteString(fmt.Sprintf("%v-cod-%v\n", k, v))
+	//}
+	err = writer.Flush()
+	manejoError(err)
 }
 
 // Leo linea a linea e itero en cada linea por cada caracter y guardo en un mapa
@@ -98,6 +112,10 @@ func recorroArchivoYCuento(nfr string) map[string]int {
 		// loop termination condition 1:  EOF.
 		// this is the normal loop termination condition.
 		if err == io.EOF {
+			ocurrencias["newLine"]--
+			if ocurrencias["newLine"] == 0 {
+				delete(ocurrencias, "newLine")
+			}
 			fmt.Println(fmt.Sprintf("\nse leyo un EOF %v\n", err.Error()))
 			break
 		}
@@ -171,6 +189,9 @@ func getListaDeCaracteres(mapa map[string]int) []Caracter {
 		listaDeCaracteres = append(listaDeCaracteres, newCaracter)
 	}
 	sort.Slice(listaDeCaracteres, func(i, j int) bool {
+		if listaDeCaracteres[i].Ocurrencias == listaDeCaracteres[j].Ocurrencias {
+			return listaDeCaracteres[i].Caracter < listaDeCaracteres[j].Caracter
+		}
 		return listaDeCaracteres[i].Ocurrencias < listaDeCaracteres[j].Ocurrencias
 	})
 	fmt.Println(fmt.Sprintf("lista de caracteres: %v", listaDeCaracteres))
@@ -380,24 +401,28 @@ func recorroArchivoYEscriboArchivoCodificado(nfr, nfw string) {
 		// fmt.Println(string(line))
 
 		caracteresDeLinea := strings.Split(string(line), "")
-		caracteresDeLinea = append(caracteresDeLinea, "newLine")
-		fmt.Println(fmt.Sprintf("Linea: %v", caracteresDeLinea))
+		if v, err := bf.Peek(1); err != io.EOF {
+			caracteresDeLinea = append(caracteresDeLinea, "newLine")
+		} else {
+			fmt.Println("LLEGO AL FINAL", v)
+		}
+		//fmt.Println(fmt.Sprintf("Linea: %v", caracteresDeLinea))
 		// itero por cada caracter
 		for i := 0; i < len(caracteresDeLinea); i++ {
 			// spliteo cada codigo de 0 y 1 de cada caracter
-			fmt.Println(fmt.Sprintf("iracter %v: %v", caracteresDeLinea[i], mapita[caracteresDeLinea[i]]))
+			//fmt.Println(fmt.Sprintf("iracter %v: %v", caracteresDeLinea[i], mapita[caracteresDeLinea[i]]))
 			splitCerosUnos := strings.Split(mapita[caracteresDeLinea[i]], "")
 			// recorro sobre este split de 0 y 1
 			for iSplit := 0; iSplit < len(splitCerosUnos); iSplit++ {
 				// Si es un 1 entonces le hago un set al bitarray
-				fmt.Println(fmt.Sprintf("bits: %v - iterba: %v", ba.String(), iterba))
+				//fmt.Println(fmt.Sprintf("bits: %v - iterba: %v", ba.String(), iterba))
 				if splitCerosUnos[iSplit] == "1" {
 					ba.Set(iterba)
 				}
 				// incremento el contador para recorrer el bitarray
 				iterba++
 				counterBits++
-				fmt.Println(fmt.Sprintf("bits: %v - iterba: %v", ba.String(), iterba))
+				//fmt.Println(fmt.Sprintf("bits: %v - iterba: %v", ba.String(), iterba))
 				// compruebo que no se me pase del tamaño 8, si se pasa entonces
 				// meto el bitarray en el canal y reseteo el bitarray y el iterador
 				if iterba == 8 {
@@ -412,9 +437,11 @@ func recorroArchivoYEscriboArchivoCodificado(nfr, nfw string) {
 			}
 		}
 	}
-
-	bufferEscritura = append(bufferEscritura, ba.GetData()...)
+	if iterba != 0 {
+		bufferEscritura = append(bufferEscritura, ba.GetData()...)
+	}
 	meterEnArchivoBinario(*writer, bufferEscritura)
+	// writer.Flush()
 	fileInfo, _ := archivoEscritura.Stat()
 
 	tamanioArchivoCodificado = fileInfo.Size()
@@ -422,16 +449,14 @@ func recorroArchivoYEscriboArchivoCodificado(nfr, nfw string) {
 }
 
 func meterEnArchivoBinario(writer bufio.Writer, byteArray []byte) {
+	//if writer.Available() < len(byteArray) {
+	//}
 	// fmt.Println(fmt.Sprintf("Guardo en el archivo: %v", ba.String()))
 	_, err := writer.Write(byteArray)
-	// fmt.Println("imprimi ", i, "bytes en el archivo")
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error Write!!!. %v", err))
-	}
+	manejoError(err)
 	err = writer.Flush()
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error Flush!!!. %v", err))
-	}
+	manejoError(err)
+	// fmt.Println("imprimi ", i, "bytes en el archivo")
 }
 
 /*
@@ -455,15 +480,20 @@ func leoArchivoEnBytes(nombreArchivo string) {
 	defer archivoEscritura.Close()
 	writer := bufio.NewWriter(archivoEscritura)
 	scanner := bufio.NewScanner(archivoLecturaBytes)
+	buf := make([]byte, 256)
+	bufferReader := bufio.NewReader(archivoLecturaBytes)
 	stringParaMatchearLectura = ""
-	for scanner.Scan() {
+	_, err = bufferReader.Read(buf)
+	manejoError(err)
+	for err != io.EOF {
+		//for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			fmt.Println("error", err)
 		}
-		x := scanner.Bytes()
+		//x := scanner.Bytes()
 		// fmt.Println(fmt.Sprintf("scanner.Bytes():%v", x))
-		for i := range x {
-			s := fmt.Sprintf("%b", x[i])
+		for _, b := range buf {
+			s := fmt.Sprintf("%b", b)
 			// fmt.Println(fmt.Sprintf("s:%v", s))
 			for it := len(s); it < 8; it++ {
 				s = "0" + s
@@ -476,6 +506,9 @@ func leoArchivoEnBytes(nombreArchivo string) {
 					stringParaMatchearLectura = stringParaMatchearLectura + val
 				}
 				// fmt.Println(fmt.Sprintf("Busco %v en el mapa", stringParaMatchearLectura))
+				if stringParaMatchearLectura == "0100001010" {
+					fmt.Println("encuentra esto")
+				}
 				if mapitaInvertido[stringParaMatchearLectura] != "" {
 					// fmt.Println(fmt.Sprintf("Encuntro coincidencia del codigo %v y caracter %v", stringParaMatchearLectura, mapitaInvertido[stringParaMatchearLectura]))
 					// meterEnArchivo(*writer, mapitaInvertido[stringParaMatchearLectura])
@@ -488,7 +521,14 @@ func leoArchivoEnBytes(nombreArchivo string) {
 				bufferEscritura = []string{}
 			}
 		}
+
+		_, err = bufferReader.Read(buf)
+		if err != io.EOF {
+			manejoError(err)
+		}
+
 	}
+
 	meterEnArchivo(*writer, bufferEscritura)
 	fileInfo, _ := archivoEscritura.Stat()
 	tamanioArchivoDescomprimido = fileInfo.Size()
@@ -520,6 +560,7 @@ func meterEnArchivo(writer bufio.Writer, as []string) {
 	// 		decor.Percentage(5, 0),
 	// 	),
 	// )
+
 	for _, s := range as {
 		if s == "newLine" {
 			// fmt.Println("")
@@ -531,5 +572,6 @@ func meterEnArchivo(writer bufio.Writer, as []string) {
 		// bar.Increment()
 	}
 	// p.Stop()
+
 	writer.Flush()
 }
