@@ -376,7 +376,7 @@ func matrizChequeoParidadB(codificacion int) MatrizB {
 func IntroducirError(url string, salida string) {
 	error, b, l := TieneErroresB(url)
 	if error {
-		fmt.Println("ERROR: El archivo ya contiene un error en el bloque", b, " en ", l)
+		fmt.Println("ERROR: El archivo ya contiene un error.\n", b, "\n", l)
 	} else {
 		file, err := os.Open(url)
 		manejoError(err)
@@ -454,9 +454,7 @@ func agregarErrorByte(buf []byte, tam int) []byte {
 
 //CorregirError dado un archivo, su archivo de info y un path de salida genera la salida de los mismos
 func CorregirError(url string, salida string) {
-	if error, bloqueError, posicionError := TieneErroresB(url); !error {
-		fmt.Println("El archivo no tiene error")
-	} else {
+	if error, bloqueError, posicionError := TieneErroresB(url); error {
 		file, err := os.Open(url)
 		manejoError(err)
 		defer file.Close()
