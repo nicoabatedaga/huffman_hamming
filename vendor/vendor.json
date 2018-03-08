@@ -3,16 +3,46 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "gk79AfKA6lVJ/wJf2dhq7kQdaaI=",
+			"path": "github.com/cheggaaa/pb",
+			"revision": "657164d0228d6bebe316fdf725c69f131a50fb10",
+			"revisionTime": "2017-08-24T10:41:20Z"
+		},
+		{
 			"checksumSHA1": "ix5XERm+n9qo+zxSGjD4mZTcv/U=",
 			"path": "github.com/disiqueira/gotree",
 			"revision": "4c287e3603a85571820a6a8ad100a45002150053",
 			"revisionTime": "2017-04-16T22:19:07Z"
 		},
 		{
+			"checksumSHA1": "nfQVrxtHETL7bVYiJIZhstNevXM=",
+			"path": "github.com/golang-collections/go-datastructures/bitarray",
+			"revision": "59788d5eb2591d3497ffb8fafed2f16fe00e7775",
+			"revisionTime": "2015-02-11T16:07:25Z"
+		},
+		{
+			"checksumSHA1": "zTVV9gr0Qn6mDWQ5ZTiVdIJV3CE=",
+			"path": "github.com/gosuri/uiprogress",
+			"revision": "d0567a9d84a1c40dd7568115ea66f4887bf57b33",
+			"revisionTime": "2017-02-24T06:39:37Z"
+		},
+		{
+			"checksumSHA1": "MD+p/jleECAZBBXo4EfsYNIuvmk=",
+			"path": "github.com/jlabath/bitarray",
+			"revision": "1145a4e46dfe3721d658a97177c5463c63a0e0a2",
+			"revisionTime": "2015-06-11T02:30:25Z"
+		},
+		{
 			"checksumSHA1": "GjWXOIpR5k1IMAR14VEUhHRRb6Q=",
 			"path": "github.com/m2omou/go-binary-search-tree",
 			"revision": "8d21d07c47aa6c3a7d91210a7e0ac9656418117d",
 			"revisionTime": "2014-07-20T05:56:01Z"
+		},
+		{
+			"checksumSHA1": "GetE2dnjv+eCadLkmLmfPLCszgg=",
+			"path": "github.com/vbauerster/mpb",
+			"revision": "5707bfc24433d45a5cb171070ba617656e772d98",
+			"revisionTime": "2017-11-30T19:59:33Z"
 		}
 	],
 	"rootPath": "huffman_hamming"
