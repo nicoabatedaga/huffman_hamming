@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	hamming.Hamming()
+	hamming.Hamming(512)
 	//huffman.Huffman()
 }
