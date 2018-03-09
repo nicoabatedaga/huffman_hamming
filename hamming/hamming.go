@@ -26,17 +26,14 @@ var matrizEntradaB MatrizB
 var matrizB MatrizB
 
 //Hamming genera los archivos g,h y r correspondientes a las matrices
-func Hamming(cod int) {
-	//	ahora := time.Now()
+func Hamming(cod int, prefix string) {
 	matrizGB = matrizGeneradoraB(cod)
-	matrizGB.ToFile("./g")
+	matrizGB.ToFile(fmt.Sprintf("%vg.pgm", prefix))
 	matrizChequeoB = matrizChequeoParidadB(cod)
-	matrizChequeoB.ToFile("./h")
-
+	matrizChequeoB.ToFile(fmt.Sprintf("%vh.pgm", prefix))
 	rB = matrizDecodificadoraB(cod)
-	rB.ToFile("./r")
+	rB.ToFile(fmt.Sprintf("%vr.pgm", prefix))
 
-	//	fmt.Println(time.Now().Sub(ahora))
 	return
 }
 
@@ -376,7 +373,7 @@ func matrizChequeoParidadB(codificacion int) MatrizB {
 func IntroducirError(url string, salida string) {
 	error, b, l := TieneErroresB(url)
 	if error {
-		fmt.Println("ERROR: El archivo ya contiene un error.\n", b, "\n", l)
+		fmt.Println("El archivo ya contiene un error en el bloque", b, " en la posición ", l, ".")
 	} else {
 		file, err := os.Open(url)
 		manejoError(err)
@@ -500,6 +497,8 @@ func CorregirError(url string, salida string) {
 
 		}
 		bufferWriter.Flush()
+	} else {
+		fmt.Println("No tiene error el archivo.")
 	}
 }
 

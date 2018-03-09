@@ -204,7 +204,7 @@ func (m MatrizB) ToFile(url string) {
 		log.Fatal(err)
 	}
 	alto, ancho := m.obtenerTam()
-	_, err = file.WriteString(fmt.Sprintf("%v\n%v\n", alto, ancho))
+	_, err = file.WriteString(fmt.Sprintf("P2\n%v\n%v\n255\n", ancho, alto))
 	manejoError(err)
 	_, err = file.WriteString(m.String())
 	manejoError(err)
