@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/jlabath/bitarray"
@@ -30,27 +31,27 @@ func manejoError(err error) {
 	}
 }
 
-func Huffman() {
-	fmt.Println(" - empiezo el huffman - ")
-	nombreArchivo := "./bibliaDes.txt"
-	nombreArchivoComprimido := Comprimir(nombreArchivo)
-	// fmt.Println(fmt.Sprintf("El archivo comprimido se llama: %v", nombreArchivoComprimido))
-	Descomprimir(nombreArchivoComprimido)
-	if tamanioArchivo != tamanioArchivoDescomprimido {
-		panic(fmt.Sprintf("Los tamaños no coinciden %d - %d", tamanioArchivo, tamanioArchivoDescomprimido))
-	}
-	fmt.Println(fmt.Sprintf("OK"))
-	return
-}
+// func Huffman() {
+// 	fmt.Println(" - empiezo el huffman - ")
+// 	nombreArchivo := "./bibliaDes.txt"
+// 	nombreArchivoComprimido := Comprimir(nombreArchivo)
+// 	// fmt.Println(fmt.Sprintf("El archivo comprimido se llama: %v", nombreArchivoComprimido))
+// 	Descomprimir(nombreArchivoComprimido)
+// 	if tamanioArchivo != tamanioArchivoDescomprimido {
+// 		panic(fmt.Sprintf("Los tamaños no coinciden %d - %d", tamanioArchivo, tamanioArchivoDescomprimido))
+// 	}
+// 	fmt.Println(fmt.Sprintf("OK"))
+// 	return
+// }
 
-func Comprimir(nombreArchivo string) string {
-	nombreArchivoComprimido := nombreArchivo + ".comprimido.huff"
+func Comprimir(nombreArchivo string, nombreArchivoComprimido string) string {
+	nombreArchivoComprimido = nombreArchivoComprimido + ".huff"
 	listaDeCaracteres = getListaDeCaracteres(recorroArchivoYCuento(nombreArchivo))
 	raizDelArbol := generarArbol(listaDeCaracteres)
 	treeAsMap(raizDelArbol)
 	// fmt.Println(fmt.Sprintf("Mapa del arbol: %v", mapita))
-	go guardoListaDeCaracteresEnArchivo(nombreArchivoComprimido)
 	recorroArchivoYEscriboArchivoCodificado(nombreArchivo, nombreArchivoComprimido)
+	guardoListaDeCaracteresEnArchivo(nombreArchivoComprimido)
 	return nombreArchivoComprimido
 }
 
@@ -67,6 +68,7 @@ func guardoListaDeCaracteresEnArchivo(nombreArchivo string) {
 	}
 	sort.Strings(arr)
 	writer := bufio.NewWriter(archivoEscrituraListaCaracteres)
+	writer.WriteString(fmt.Sprintf("%v\n", counterBits))
 	for _, v := range arr {
 		writer.WriteString(fmt.Sprintf("%v-cod-%v\n", v, mapitaInvertido[v]))
 	}
@@ -82,6 +84,8 @@ func leoListaDeCaracteresDesdeArchivo(nombreArchivo string) {
 	defer archivoLecturaListaCaracteres.Close()
 	manejoError(err)
 	reader := bufio.NewReader(archivoLecturaListaCaracteres)
+	rl, _, _ := reader.ReadLine()
+	counterBits, _ = strconv.ParseInt(string(rl), 10, 64)
 	mapitaInvertido = map[string]string{}
 	for {
 		line, isPrefix, err := reader.ReadLine()
@@ -388,7 +392,7 @@ consulto nuevamente si matchea, si matchea, grabo en el archivo el caracter asoc
 con la que voy a ir concatenando los 0's y 1's para descomprimir
 */
 
-func Descomprimir(nombreArchivo string) {
+func Descomprimir(nombreArchivo string, nombreArchivoDescomprimido string) string {
 	counterReadBits = 0
 	ultimo := false
 	bufferEscritura := []string{}
@@ -396,7 +400,7 @@ func Descomprimir(nombreArchivo string) {
 	archivoLecturaBytes, err := os.Open(nombreArchivo)
 	manejoError(err)
 	defer archivoLecturaBytes.Close()
-	archivoEscritura, err := os.Create(nombreArchivo + "Descomprimido")
+	archivoEscritura, err := os.Create(nombreArchivoDescomprimido)
 	manejoError(err)
 	defer archivoEscritura.Close()
 	writer := bufio.NewWriter(archivoEscritura)
@@ -459,6 +463,7 @@ func Descomprimir(nombreArchivo string) {
 	fileInfo, _ := archivoEscritura.Stat()
 	tamanioArchivoDescomprimido = fileInfo.Size()
 	fmt.Println(fmt.Sprintf("file uncompressed size: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
+	return nombreArchivoDescomprimido
 }
 
 func meterEnArchivo(writer bufio.Writer, as []string) {

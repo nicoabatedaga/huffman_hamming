@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	h "huffman_hamming/hamming"
+	"huffman_hamming/huffman"
 	"os"
 	"runtime/trace"
 )
@@ -33,10 +34,14 @@ func main() {
 	}
 	if *operacion == "c" {
 		fmt.Println("Comprimir archivo")
+		fmt.Println(huffman.Comprimir(*pathIn, *pathOut))
+		return
 	}
 
 	if *operacion == "d" {
 		fmt.Println("Descomprimir archivo")
+		fmt.Println(huffman.Descomprimir(*pathIn, *pathOut))
+		return
 	}
 	if *operacion == "a" {
 		fmt.Println("Abrir arbol")
@@ -76,7 +81,7 @@ func main() {
 		return
 	}
 	if *operacion == "m" {
-		h.Hamming(*codifiacion)
+		h.Hamming(*codifiacion, *pathOut)
 		return
 	}
 	fmt.Println("La operacion ingresada no es valida.")
