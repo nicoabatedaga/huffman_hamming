@@ -20,18 +20,16 @@ public class Huffman_Hamming {
     
  
     
-    public static void main(String[] args) {
-        // TODO code application logic here 
-       //"com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel"
-    
-       System.setProperty("apple.laf.useScreenMenuBar", "true");
-       System.setProperty("com.apple.mrj.application.apple.menu.about.name", "WikiTeX");
+    public static void main(String[] args) {  
        try {
            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
        } catch (Exception e) {
            e.printStackTrace(System.out);
        }
-       javax.swing.JFrame ventana = new VentanaPrincipal();  
+       javax.swing.JFrame ventana = new VentanaPrincipal();   
+       /*Image image = Toolkit.getDefaultToolkit().getImage(".\\resource\\unsl.ico"); 
+       
+       ventana.setIconImage(image);        */ 
        ventana.setVisible(true);
     }
 }

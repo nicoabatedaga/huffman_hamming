@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	h "huffman_hamming/hamming"
+	"huffman_hamming/huffman"
 	"os"
 	"runtime/trace"
 	"time"
@@ -39,10 +40,14 @@ func main() {
 	}
 	if *operacion == "c" {
 		fmt.Println("Comprimir archivo")
+		fmt.Println(huffman.Comprimir(*pathIn, *pathOut))
+		return
 	}
 
 	if *operacion == "d" {
 		fmt.Println("Descomprimir archivo")
+		fmt.Println(huffman.Descomprimir(*pathIn, *pathOut))
+		return
 	}
 	var err error
 	if *operacion == "p" {

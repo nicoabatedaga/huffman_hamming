@@ -7,6 +7,7 @@ package huffman_hamming;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -57,6 +58,22 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     int codificacion =512;
     String editorPreferido ="notepad";
     private String ejecutablePath="C:\\Users\\Joaquin\\go\\src\\huffman_hamming\\huffman_hamming.exe"; 
+    public String convertirHam(String path){
+        if (getExtension(path).equals("ham")){
+            return path;
+        }else{
+            return path+".ham";
+        }
+    }
+    
+    public String getExtension(String path){
+        String extension = "";
+        int i= path.lastIndexOf(".");
+        if (i>0){
+            extension = path.substring(i+1);
+        }
+        return extension ;
+    }
     public void cargarPreferencias(){
         Properties prop = new Properties();
         InputStream input = null;
@@ -77,6 +94,22 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             }
         }
     }
+       public String ejecutar(String comando){
+    StringBuffer  resultado =new StringBuffer(); 
+    try{
+        Process p=Runtime.getRuntime().exec(comando);
+        p.waitFor();
+        BufferedReader reader =
+        new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line = "";
+        while ((line = reader.readLine())!= null) {
+            resultado.append(line + "\n");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return resultado.toString();
+   }
     public void restablercerPreferencias(){
         try{    
             String EDITOR = "notepad";
@@ -149,9 +182,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     public VentanaPrincipal() {
         
-        initComponents(); 
-        this.setIconImage(new ImageIcon(getClass().getResource("\\images\\unsl.ico")).getImage());
-
+        initComponents();  
         this.botonComprimir.setEnabled(true);
         this.botonComprobar.setEnabled(false);           
         this.botonCorregir.setEnabled(false);
@@ -237,15 +268,14 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         botonPreferencias = new javax.swing.JMenu();
         botonEditor = new javax.swing.JMenuItem();
         menuCodificacion = new javax.swing.JMenu();
-        verConfiguracion = new javax.swing.JMenuItem();
-        botonRestablecer = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
-        botonSalir = new javax.swing.JMenuItem();
-        botonInformacion = new javax.swing.JMenu();
         botonAcerca = new javax.swing.JMenuItem();
+        jSeparator2 = new javax.swing.JPopupMenu.Separator();
+        botonSalir = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setIconImage(Toolkit.getDefaultToolkit().getImage("\\images\\unsl.ico"));
+        setTitle("Huffman Hamming");
+        setIconImage((Toolkit.getDefaultToolkit().getImage(".\\resource\\unsl.ico")));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -404,23 +434,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         menuCodificacion.setText("Codificación");
         botonPreferencias.add(menuCodificacion);
-
-        verConfiguracion.setText("Ver configuración");
-        verConfiguracion.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                verConfiguracionActionPerformed(evt);
-            }
-        });
-        botonPreferencias.add(verConfiguracion);
-
-        botonRestablecer.setText("Restabler configuración");
-        botonRestablecer.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                botonRestablecerActionPerformed(evt);
-            }
-        });
-        botonPreferencias.add(botonRestablecer);
         botonPreferencias.add(jSeparator1);
+
+        botonAcerca.setText("Acerca");
+        botonAcerca.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                botonAcercaActionPerformed(evt);
+            }
+        });
+        botonPreferencias.add(botonAcerca);
+        botonPreferencias.add(jSeparator2);
 
         botonSalir.setText("Salir");
         botonSalir.addActionListener(new java.awt.event.ActionListener() {
@@ -431,32 +454,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         botonPreferencias.add(botonSalir);
 
         BarraMenu.add(botonPreferencias);
-
-        botonInformacion.setText("Información");
-        botonInformacion.addMenuListener(new javax.swing.event.MenuListener() {
-            public void menuCanceled(javax.swing.event.MenuEvent evt) {
-            }
-            public void menuDeselected(javax.swing.event.MenuEvent evt) {
-            }
-            public void menuSelected(javax.swing.event.MenuEvent evt) {
-                botonInformacionMenuSelected(evt);
-            }
-        });
-        botonInformacion.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                botonInformacionActionPerformed(evt);
-            }
-        });
-
-        botonAcerca.setText("Acerca");
-        botonAcerca.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                botonAcercaActionPerformed(evt);
-            }
-        });
-        botonInformacion.add(botonAcerca);
-
-        BarraMenu.add(botonInformacion);
 
         setJMenuBar(BarraMenu);
 
@@ -474,6 +471,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void botonProtegerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonProtegerActionPerformed
@@ -497,23 +495,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_botonProtegerActionPerformed
 
-    
-   public String ejecutar(String comando){
-    StringBuffer  resultado =new StringBuffer(); 
-    try{
-        Process p=Runtime.getRuntime().exec(comando);
-        p.waitFor();
-        BufferedReader reader =
-        new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line = "";
-        while ((line = reader.readLine())!= null) {
-            resultado.append(line + "\n");
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-    return resultado.toString();
-   }
     private void seletorArchivosInPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_seletorArchivosInPropertyChange
     if(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY.equals(evt.getPropertyName())){
         File file =this.seletorArchivosIn.getSelectedFile();
@@ -566,12 +547,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     this.botonDañar.setVisible(false);
                     this.botonDescomprimir.setVisible(false);
                     this.botonDesproteger.setVisible(false);
-                    this.botonProteger.setVisible(true);
-                        
-                    break;
-                            
-            
-            
+                    this.botonProteger.setVisible(true); 
+                    break; 
             }
             
         }
@@ -685,32 +662,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
           }
         
     }//GEN-LAST:event_botonCorregirActionPerformed
-public void mostrarImagen(String path,String tittle,int x,int y){
-    try {
-    final JFrame showPictureFrame = new JFrame(tittle);
-    JLabel pictureLabel = new JLabel();
-    URL url = new File(path).toURI().toURL();
-    BufferedImage img = ImageIO.read(url);
-    pictureLabel.setIcon(new ImageIcon(img));
-    // add the label to the frame
-    showPictureFrame.add(pictureLabel);
-    showPictureFrame.setLocation(x,y);
-    // pack everything (does many stuff. e.g. resizes the frame to fit the image)
-    showPictureFrame.pack();
 
-    //this is how you should open a new Frame or Dialog, but only using showPictureFrame.setVisible(true); would also work.
-    java.awt.EventQueue.invokeLater(new Runnable() {
-
-      public void run() {
-        showPictureFrame.setVisible(true);
-      }
-    });
-
-  } catch (IOException ex) {
-    System.err.println("Some IOException accured (did you set the right path?): ");
-    System.err.println(ex.getMessage());
-  }
-}
     private void seletorArchivosInActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_seletorArchivosInActionPerformed
         // TODO add your handling code here:
         if ("ApproveSelection".equals(evt.getActionCommand())){
@@ -741,13 +693,36 @@ public void mostrarImagen(String path,String tittle,int x,int y){
 
         }
         if (evt.getActionCommand().equals("CancelSelection")){
-            System.out.println("Cancel");
+            System.exit(0); 
         }
     }//GEN-LAST:event_seletorArchivosInActionPerformed
 
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        // TODO add your handling code here: 
+    }//GEN-LAST:event_formWindowClosed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here: 
+        System.out.println("Cierro la ventana");
+        guardarPreferencias();
+    }//GEN-LAST:event_formWindowClosing
+
+    private void botonAcercaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonAcercaActionPerformed
+        // TODO add your handling code here:
+        System.out.println("Acerca");  
+        JOptionPane.showMessageDialog(null,"<html><b>Huffman Hamming</b>, aplicación desarrollada en el ambito de la <br>matería Teoría de la Información para la carrera Ing. en Informatica.<br><br><b>Desarrollada por:</b><br><i>Abatedaga Biole, Nicolas y Loyola, Franco Joaquín</i></body></html> ","Huffman Hamming", JOptionPane.DEFAULT_OPTION);
+
+    }//GEN-LAST:event_botonAcercaActionPerformed
+
+    private void botonSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonSalirActionPerformed
+        // TODO add your handling code here:
+        guardarPreferencias();
+        System.exit(0);
+    }//GEN-LAST:event_botonSalirActionPerformed
+
     private void botonEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonEditorActionPerformed
         // TODO add your handling code here:
-       
+
         JPanel panel = new JPanel();
         JFileChooser fc = new JFileChooser();
         panel.add(fc);
@@ -759,7 +734,7 @@ public void mostrarImagen(String path,String tittle,int x,int y){
                     return true;
                 }else{
                     if (f.isDirectory()){
-                    return true;
+                        return true;
                     }
                 }
                 return false;
@@ -775,100 +750,17 @@ public void mostrarImagen(String path,String tittle,int x,int y){
         int seleccion =fc.showSaveDialog(jPanel1);// sacar jPanell si no anda
         if (seleccion == JFileChooser.APPROVE_OPTION){
             File fileOut = fc.getSelectedFile();
-             if (fileOut != null){  
-                 editorPreferido=fileOut.getAbsolutePath();
+            if (fileOut != null){
+                editorPreferido=fileOut.getAbsolutePath();
             }
-        } 
+        }
     }//GEN-LAST:event_botonEditorActionPerformed
-
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        // TODO add your handling code here: 
-    }//GEN-LAST:event_formWindowClosed
-
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        // TODO add your handling code here: 
-        System.out.println("Cierro la ventana");
-        guardarPreferencias();
-    }//GEN-LAST:event_formWindowClosing
-
-    private void botonRestablecerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonRestablecerActionPerformed
-        restablercerPreferencias();
-    }//GEN-LAST:event_botonRestablecerActionPerformed
-
-    private void verConfiguracionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_verConfiguracionActionPerformed
-        JOptionPane.showMessageDialog(new JFrame(),"Editor: "+editorPreferido+"\nEjecutable: "+ejecutablePath,"Configuración", JOptionPane.INFORMATION_MESSAGE);
-        
-    }//GEN-LAST:event_verConfiguracionActionPerformed
-
-    private void botonSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonSalirActionPerformed
-        // TODO add your handling code here:
-        guardarPreferencias();
-        System.exit(0);
-    }//GEN-LAST:event_botonSalirActionPerformed
-
-    private void botonInformacionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonInformacionActionPerformed
-        // TODO add your handling code here: 
-    }//GEN-LAST:event_botonInformacionActionPerformed
-
-    private void botonInformacionMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_botonInformacionMenuSelected
-
-
-        // TODO add your handling code here:
-    }//GEN-LAST:event_botonInformacionMenuSelected
-
-    private void botonAcercaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonAcercaActionPerformed
-        // TODO add your handling code here:
-        System.out.println("Acerca");
-         final ImageIcon icon = new ImageIcon("C:\\Users\\Joaquin\\go\\src\\huffman_hamming\\Huffman_Hamming\\src\\huffman_hamming\\images\\unsl.ico");
-          
-        JOptionPane.showMessageDialog(null,"Aplicación desarrollada en el ambito\n de la materia Teoría de la información\n para la carrera Ing. en informatica. ","Acerca de Huffman Hamming", JOptionPane.DEFAULT_OPTION,icon);
-
-    }//GEN-LAST:event_botonAcercaActionPerformed
-    public String convertirHam(String path){
-        if (getExtension(path).equals("ham")){
-            return path;
-        }else{
-            return path+".ham";
-        }
-    }
     
-    public String getExtension(String path){
-        String extension = "";
-        int i= path.lastIndexOf(".");
-        if (i>0){
-            extension = path.substring(i+1);
-        }
-        return extension ;
-    }
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-         
 
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                System.out.println("Nombre:"+info.getName());
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -889,17 +781,15 @@ public void mostrarImagen(String path,String tittle,int x,int y){
     private javax.swing.JButton botonDescomprimir;
     private javax.swing.JButton botonDesproteger;
     private javax.swing.JMenuItem botonEditor;
-    private javax.swing.JMenu botonInformacion;
     private javax.swing.JMenu botonPreferencias;
     private javax.swing.JButton botonProteger;
-    private javax.swing.JMenuItem botonRestablecer;
     private javax.swing.JMenuItem botonSalir;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JMenu menuCodificacion;
     private javax.swing.JFileChooser seletorArchivosIn;
-    private javax.swing.JMenuItem verConfiguracion;
     // End of variables declaration//GEN-END:variables
 
     private static class FileViewImpl extends FileView {
