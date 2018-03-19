@@ -28,12 +28,11 @@ var matrizB MatrizB
 //Hamming genera los archivos g,h y r correspondientes a las matrices
 func Hamming(cod int, prefix string) {
 	matrizGB = matrizGeneradoraB(cod)
-	matrizGB.ToFile(fmt.Sprintf("%vg.pgm", prefix))
+	matrizGB.ToImage(fmt.Sprintf("%vg.jpeg", prefix), 1)
 	matrizChequeoB = matrizChequeoParidadB(cod)
-	matrizChequeoB.ToFile(fmt.Sprintf("%vh.pgm", prefix))
+	matrizChequeoB.ToImage(fmt.Sprintf("%vh.jpeg", prefix), 15)
 	rB = matrizDecodificadoraB(cod)
-	rB.ToFile(fmt.Sprintf("%vr.pgm", prefix))
-
+	rB.ToImage(fmt.Sprintf("%vr.jpeg", prefix), 1)
 	return
 }
 

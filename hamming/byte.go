@@ -2,7 +2,9 @@ package hamming
 
 import (
 	"fmt"
-	"log"
+	"image"
+	"image/color"
+	"image/jpeg"
 	bits "math/bits"
 	"os"
 	"sync"
@@ -184,31 +186,39 @@ func contarUnos(ent byte) int {
 	return bits.OnesCount8(uint8(ent))
 }
 
-func (m MatrizB) String() string {
-	salida := ""
-	for _, fila := range m.datos {
-		for _, c := range fila {
-			salida += fmt.Sprintf("%v ", c)
-		}
-		salida += "\n"
-	}
-	return salida
-}
+//ToImage graba la imagen en una imagen
+func (m MatrizB) ToImage(url string, expAltura int) {
+	ancho := len(m.datos[0])
+	alto := len(m.datos)
+	imagen := image.NewRGBA(image.Rect(0, 0, alto*expAltura, ancho*8))
+	for i, f := range m.datos {
+		for j, c := range f {
+			for b := 0; b < 8; b++ {
+				cB := c & (uint8(1) << uint8(b))
+				if cB == 0 {
+					cB = 255
+				} else {
+					cB = 0
+					//cB = cB - 254
 
-//ToFile graba una Matriz en un archivo binario
-func (m MatrizB) ToFile(url string) {
-	file, err := os.Create(url)
-	manejoError(err)
-	defer file.Close()
-	if err != nil {
-		log.Fatal(err)
+				}
+				col := color.RGBA{R: cB, G: 255, B: 255, A: 255}
+				for k := 0; k < expAltura; k++ {
+					imagen.Set(i*expAltura+k, j*8+b, col)
+				}
+
+			}
+
+		}
 	}
-	alto, ancho := m.obtenerTam()
-	_, err = file.WriteString(fmt.Sprintf("P2\n%v\n%v\n255\n", ancho, alto))
-	manejoError(err)
-	_, err = file.WriteString(m.String())
-	manejoError(err)
-	return
+
+	file, err := os.Create(url)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	jpeg.Encode(file, imagen, nil)
+	file.Close()
 }
 
 //ByteToBool convierte un arreglo de byte's en uno de booleanos

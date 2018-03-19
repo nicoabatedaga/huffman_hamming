@@ -6,14 +6,16 @@ import (
 	h "huffman_hamming/hamming"
 	"os"
 	"runtime/trace"
+	"time"
 )
 
 var (
 	pathIn      = flag.String("in", "./prueba.txt", " direccion del archivo de entrada")
 	pathOut     = flag.String("out", "./prueba", " direccion del archivo de salida")
 	codifiacion = flag.Int("cod", 512, " codificacion correspondiente al cifrado de archivos(512,1024,2048)")
-	operacion   = flag.String("op", "", " define que operacion se realizara:\n\tc:comprimir,\n\td:descomprimir,\n\ta:ver arbol de codigos,\n\tp:proteger,\n\tdp:desproteger,\n\te:comprobar error,\n\ti: ingresar error,\n\tr: reparar error,\n\tm: generar archivos matrices.")
+	operacion   = flag.String("op", "", " define que operacion se realizara:\n\tc:comprimir,\n\td:descomprimir,\n\tp:proteger,\n\tdp:desproteger,\n\te:comprobar error,\n\ti: ingresar error,\n\tr: reparar error.")
 	t           = flag.Bool("t", false, " al setearlo se genera trace de la ejecucción")
+	duracion    = flag.Bool("d", false, " al setearlo se imprimen los tiempos de ejecucción")
 )
 
 func main() {
@@ -31,15 +33,16 @@ func main() {
 		}
 		defer trace.Stop()
 	}
+	if *duracion {
+		comienzoEje := time.Now()
+		defer fmt.Println("Duracion: ", comienzoEje.Sub(time.Now()))
+	}
 	if *operacion == "c" {
 		fmt.Println("Comprimir archivo")
 	}
 
 	if *operacion == "d" {
 		fmt.Println("Descomprimir archivo")
-	}
-	if *operacion == "a" {
-		fmt.Println("Abrir arbol")
 	}
 	var err error
 	if *operacion == "p" {
@@ -73,10 +76,6 @@ func main() {
 	}
 	if *operacion == "r" {
 		h.CorregirError(*pathIn, *pathOut)
-		return
-	}
-	if *operacion == "m" {
-		h.Hamming(*codifiacion)
 		return
 	}
 	fmt.Println("La operacion ingresada no es valida.")

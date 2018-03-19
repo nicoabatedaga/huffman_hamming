@@ -31,8 +31,7 @@ public class Huffman_Hamming {
        } catch (Exception e) {
            e.printStackTrace(System.out);
        }
-       javax.swing.JFrame ventana = new VentanaPrincipal();
-         
+       javax.swing.JFrame ventana = new VentanaPrincipal();  
        ventana.setVisible(true);
     }
 }
