@@ -29,7 +29,8 @@ public class Huffman_Hamming {
        javax.swing.JFrame ventana = new VentanaPrincipal();   
        /*Image image = Toolkit.getDefaultToolkit().getImage(".\\resource\\unsl.ico"); 
        
-       ventana.setIconImage(image);        */ 
+       ventana.setIconImage(image);        */  
+       
        ventana.setVisible(true);
     }
 }

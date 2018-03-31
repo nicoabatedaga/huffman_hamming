@@ -5,8 +5,6 @@ import (
 	"fmt"
 	h "huffman_hamming/hamming"
 	"huffman_hamming/huffman"
-	"os"
-	"runtime/trace"
 	"time"
 )
 
@@ -15,37 +13,17 @@ var (
 	pathOut     = flag.String("out", "./prueba", " direccion del archivo de salida")
 	codifiacion = flag.Int("cod", 512, " codificacion correspondiente al cifrado de archivos(512,1024,2048)")
 	operacion   = flag.String("op", "", " define que operacion se realizara:\n\tc:comprimir,\n\td:descomprimir,\n\tp:proteger,\n\tdp:desproteger,\n\te:comprobar error,\n\ti: ingresar error,\n\tr: reparar error.")
-	t           = flag.Bool("t", false, " al setearlo se genera trace de la ejecucción")
-	duracion    = flag.Bool("d", false, " al setearlo se imprimen los tiempos de ejecucción")
 )
 
 func main() {
 	flag.Parse()
-	if *t {
-		f, err := os.Create("trace.out")
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-
-		err = trace.Start(f)
-		if err != nil {
-			panic(err)
-		}
-		defer trace.Stop()
-	}
-	if *duracion {
-		comienzoEje := time.Now()
-		defer fmt.Println("Duracion: ", comienzoEje.Sub(time.Now()))
-	}
+	ahora := time.Now()
 	if *operacion == "c" {
-		fmt.Println("Comprimir archivo")
 		fmt.Println(huffman.Comprimir(*pathIn, *pathOut))
 		return
 	}
 
 	if *operacion == "d" {
-		fmt.Println("Descomprimir archivo")
 		fmt.Println(huffman.Descomprimir(*pathIn, *pathOut))
 		return
 	}
@@ -60,6 +38,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+		fmt.Println(time.Now().Sub(ahora).Seconds(), " segundos")
 		return
 
 	}
@@ -68,11 +47,14 @@ func main() {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+		fmt.Println(time.Now().Sub(ahora).Seconds(), " segundos")
 		return
 	}
 	if *operacion == "e" {
-		e, b, p := h.TieneErroresB(*pathIn)
-		fmt.Printf("%v\n%v\n%v\n", e, b, p)
+		arrErrores := h.TieneErroresB(*pathIn)
+		for i := 0; i < len(arrErrores); i += 2 {
+			fmt.Printf("%v\n%v\n", arrErrores[i], arrErrores[i+1])
+		}
 		return
 	}
 	if *operacion == "i" {

@@ -67,6 +67,7 @@ func MultiplicarByte(matrizEntrada, mE MatrizB) (MatrizB, error) {
 		m := MatrizB{datos: dato}
 		return m, fmt.Errorf("error: la matriz no es una matriz fila")
 	}
+	mascara := []byte{128, 64, 32, 16, 8, 4, 2, 1}
 	if anchoE == anchoM {
 		ancho := (altoM) / 8
 		if altoM%8 != 0 {
@@ -78,8 +79,8 @@ func MultiplicarByte(matrizEntrada, mE MatrizB) (MatrizB, error) {
 			for i := 1; i < anchoM; i++ {
 				valor ^= matrizEntrada.datos[k][i] & mE.datos[0][i]
 			}
-			if contarUnos(valor)%2 != 1 {
-				aux.Set(0, k)
+			if bits.OnesCount8(valor)%2 == 1 {
+				aux.datos[0][k/8] |= mascara[k%8]
 			}
 		}
 		return aux, nil
@@ -107,12 +108,11 @@ func MultiplicarByteO(matrizEntrada, mE MatrizB) (MatrizB, error) {
 		}
 		aux := NuevaMatrizB(1, ancho)
 
+		mascara := []byte{128, 64, 32, 16, 8, 4, 2, 1}
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		wg.Add(numbProc)
-		mascara := []byte{128, 64, 32, 16, 8, 4, 2, 1}
 		for g := 0; g < numbProc; g++ {
-			//CONTROLAR
 			go func(g int) {
 				for k := g * altoM / numbProc; k < (1+g)*altoM/numbProc; k++ {
 					valor := matrizEntrada.datos[k][0] & mE.datos[0][0]
@@ -129,6 +129,7 @@ func MultiplicarByteO(matrizEntrada, mE MatrizB) (MatrizB, error) {
 			}(g)
 		}
 		wg.Wait()
+
 		return aux, nil
 	}
 	dato := make([][]byte, 1)

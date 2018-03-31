@@ -3,13 +3,51 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"huffman_hamming/hamming"
 	"io"
 	"os"
-	"testing"
 	"time"
 )
 
+/*func TestTiempos(t *testing.T) {
+	var archivoPrueba = struct {
+		archivoEntrada      string
+		archivoProtegido    string
+		archivoDesprotegido string
+	}{
+		"./libros/biblia.txt",
+		"./libros/biblia.ham",
+		"./libros/bibliaDesprotegido.txt",
+	}
+	path := "tiemposEjecucion"
+	crearArchivo(path + "P.csv")
+	appendFile(path+"P.csv", "operacion;codificacion;tiempo\n")
+	crearArchivo(path + "C.csv")
+	appendFile(path+"C.csv", "operacion;codificacion;tiempo\n")
+	crearArchivo(path + "D.csv")
+	appendFile(path+"D.csv", "operacion;codificacion;tiempo\n")
+	var cod []int
+	cod = []int{2048}
+	for _, c := range cod {
+		for i := 0; i < 10; i++ {
+			ahora := time.Now()
+			error := hamming.ProtegerB(archivoPrueba.archivoEntrada, archivoPrueba.archivoProtegido, c)
+			manejoError(error)
+			appendFile(path+"P.csv", fmt.Sprintf("progeter;%v;%v\n", c, tiempoStr(time.Now().Sub(ahora))))
+
+			ahora = time.Now()
+			hamming.TieneErroresB(archivoPrueba.archivoProtegido)
+			appendFile(path+"C.csv", fmt.Sprintf("comprobar;%v;%v\n", c, tiempoStr(time.Now().Sub(ahora))))
+
+			ahora = time.Now()
+			error = hamming.DesprotegerB(archivoPrueba.archivoProtegido, archivoPrueba.archivoDesprotegido)
+			manejoError(error)
+			appendFile(path+"D.csv", fmt.Sprintf("desproteger;%v;%v\n", c, tiempoStr(time.Now().Sub(ahora))))
+		}
+	}
+
+}
+*/
+/*
 func TestProteccionDesproteccionArchivo(t *testing.T) {
 	ahora := time.Now()
 	fmt.Println("Test Proteccion-Desproteccion ", ahora)
@@ -44,17 +82,18 @@ func TestProteccionDesproteccionArchivo(t *testing.T) {
 		}
 		fmt.Println("")
 	}
-}
+}*/
 func tiempo() string {
 	ahora := time.Now()
 	return fmt.Sprintf("%v' %v'' %v-", ahora.Minute(), ahora.Second(), ahora.Nanosecond())
 }
 func tiempoStr(ahora time.Duration) string {
 
-	return fmt.Sprintf("%v", ahora.String())
+	return fmt.Sprintf("%v", ahora.Seconds())
 
 }
 
+/*
 func TestCorregirError(t *testing.T) {
 	var archivosPrueba = []struct {
 		archivoEntrada      string
@@ -89,7 +128,7 @@ func TestCorregirError(t *testing.T) {
 		}
 	}
 }
-
+*/ /*
 func TestProteccionArchivosTieneErrores(t *testing.T) {
 	ahora := time.Now()
 	fmt.Println("Test TieneErrores ", ahora)
@@ -119,8 +158,8 @@ func TestProteccionArchivosTieneErrores(t *testing.T) {
 		}
 		fmt.Println("")
 	}
-}
-
+}*/
+/*
 func TestProteccionArchivosAgregarErrores(t *testing.T) {
 	ahora := time.Now()
 	fmt.Println("Test Agregar Errores ", ahora)
@@ -156,7 +195,7 @@ func TestProteccionArchivosAgregarErrores(t *testing.T) {
 		}
 		fmt.Println("")
 	}
-}
+}*/
 func manejoError(err error) {
 	if err != nil {
 		panic(fmt.Sprintf("hubo un error, %v", err))
@@ -193,5 +232,19 @@ func compararArchivos(path1, path2 string) bool {
 			return false
 		}
 	}
+}
+func appendFile(url, cadena string) {
+	f, err := os.OpenFile(url, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	fmt.Fprintf(f, "%s", cadena)
+}
 
+func crearArchivo(url string) {
+	_, err := os.Stat(url)
+	if os.IsNotExist(err) {
+		os.Create(url)
+	}
 }

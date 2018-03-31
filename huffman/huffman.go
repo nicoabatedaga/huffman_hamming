@@ -114,7 +114,7 @@ func recorroArchivoYCuento(nfr string) map[string]int {
 	manejoError(err)
 	fileInfo, _ := archivoLectura.Stat()
 	tamanioArchivo = fileInfo.Size()
-	fmt.Println(fmt.Sprintf("file original size: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
+	fmt.Println(fmt.Sprintf("Original: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
 	ocurrencias := map[string]int{}
 	bf := bufio.NewReader(archivoLectura)
 	for {
@@ -372,7 +372,7 @@ func recorroArchivoYEscriboArchivoCodificado(nfr, nfw string) {
 	fileInfo, _ := archivoEscritura.Stat()
 
 	tamanioArchivoCodificado = fileInfo.Size()
-	fmt.Println(fmt.Sprintf("file compressed size: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
+	fmt.Println(fmt.Sprintf("Archivo comprimido: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
 }
 
 func meterEnArchivoBinario(writer bufio.Writer, byteArray []byte) {
@@ -462,7 +462,7 @@ func Descomprimir(nombreArchivo string, nombreArchivoDescomprimido string) strin
 	meterEnArchivo(*writer, bufferEscritura)
 	fileInfo, _ := archivoEscritura.Stat()
 	tamanioArchivoDescomprimido = fileInfo.Size()
-	fmt.Println(fmt.Sprintf("file uncompressed size: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
+	fmt.Println(fmt.Sprintf("Archivo descomprimido: %vbytes - %vMb", fileInfo.Size(), fileInfo.Size()/1048576.0))
 	return nombreArchivoDescomprimido
 }
 
