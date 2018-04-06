@@ -1,14 +1,2 @@
-main.exe
-/Huffman_Hamming/nbproject/private/
+/Huffman_Hamming/dist/
 /Huffman_Hamming/build/
-test11\.txt
-
-*.ppm
-
-*.jpeg
-
-*.pgm
-
-*.png
-
-*.ham

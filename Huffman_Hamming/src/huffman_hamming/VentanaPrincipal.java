@@ -120,8 +120,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line = "";
             while ((line = reader.readLine())!= null) {
-                resultado.append(line + "\n");
-                System.out.println(line);
+                resultado.append(line + "\n"); 
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -602,10 +601,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             if (fileIn != null){  
                 String ext = getExtension(fileIn.getName());
                 switch (ext){
-                        case "ham":
-                            System.out.println("Ham"); 
-                        case "huf":
-                            System.out.println("Huf"); 
+                        case "ham": 
+                        case "huf": 
                         case "txt":
                         case "xml":
                         case "json":
@@ -617,8 +614,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                                 System.out.println(e.toString());
                             }
                             break;
-                        default:
-                            System.out.println("No se puede abrir");
+                        default: 
                             break;
                 }
             }
@@ -707,12 +703,13 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 File fdir = new File(dir);
                 if (!fdir.exists()){
                     fdir.mkdir();
-                }/*
-                try {
-                    streamToFile(this.getClass().getResourceAsStream("diff_match_path.js"), dir+"diff_match_patch.js");
-                } catch (IOException ex) {
-                    Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                }*/
+                } 
+                String dirJs=dir+"/js";
+                File jsdir = new File(dirJs);
+                if (!jsdir.exists()){
+                    jsdir.mkdir();
+                }
+             
                 stringToFile("function diff_match_patch(){this.Diff_Timeout=1;this.Diff_EditCost=4;this.Match_Threshold=.5;this.Match_Distance=1E3;this.Patch_DeleteThreshold=.5;this.Patch_Margin=4;this.Match_MaxBits=32}var DIFF_DELETE=-1,DIFF_INSERT=1,DIFF_EQUAL=0;\n" +
 "diff_match_patch.prototype.diff_main=function(a,b,c,d){\"undefined\"==typeof d&&(d=0>=this.Diff_Timeout?Number.MAX_VALUE:(new Date).getTime()+1E3*this.Diff_Timeout);if(null==a||null==b)throw Error(\"Null input. (diff_main)\");if(a==b)return a?[[DIFF_EQUAL,a]]:[];\"undefined\"==typeof c&&(c=!0);var e=c,f=this.diff_commonPrefix(a,b);c=a.substring(0,f);a=a.substring(f);b=b.substring(f);f=this.diff_commonSuffix(a,b);var g=a.substring(a.length-f);a=a.substring(0,a.length-f);b=b.substring(0,b.length-f);a=this.diff_compute_(a,\n" +
 "b,e,d);c&&a.unshift([DIFF_EQUAL,c]);g&&a.push([DIFF_EQUAL,g]);this.diff_cleanupMerge(a);return a};\n" +
@@ -765,32 +762,37 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 "diff_match_patch.prototype.patch_fromText=function(a){var b=[];if(!a)return b;a=a.split(\"\\n\");for(var c=0,d=/^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@$/;c<a.length;){var e=a[c].match(d);if(!e)throw Error(\"Invalid patch string: \"+a[c]);var f=new diff_match_patch.patch_obj;b.push(f);f.start1=parseInt(e[1],10);\"\"===e[2]?(f.start1--,f.length1=1):\"0\"==e[2]?f.length1=0:(f.start1--,f.length1=parseInt(e[2],10));f.start2=parseInt(e[3],10);\"\"===e[4]?(f.start2--,f.length2=1):\"0\"==e[4]?f.length2=0:(f.start2--,f.length2=\n" +
 "parseInt(e[4],10));for(c++;c<a.length;){e=a[c].charAt(0);try{var g=decodeURI(a[c].substring(1))}catch(h){throw Error(\"Illegal escape in patch_fromText: \"+g);}if(\"-\"==e)f.diffs.push([DIFF_DELETE,g]);else if(\"+\"==e)f.diffs.push([DIFF_INSERT,g]);else if(\" \"==e)f.diffs.push([DIFF_EQUAL,g]);else if(\"@\"==e)break;else if(\"\"!==e)throw Error('Invalid patch mode \"'+e+'\" in: '+g);c++}}return b};diff_match_patch.patch_obj=function(){this.diffs=[];this.start2=this.start1=null;this.length2=this.length1=0};\n" +
 "diff_match_patch.patch_obj.prototype.toString=function(){for(var a=[\"@@ -\"+(0===this.length1?this.start1+\",0\":1==this.length1?this.start1+1:this.start1+1+\",\"+this.length1)+\" +\"+(0===this.length2?this.start2+\",0\":1==this.length2?this.start2+1:this.start2+1+\",\"+this.length2)+\" @@\\n\"],b,c=0;c<this.diffs.length;c++){switch(this.diffs[c][0]){case DIFF_INSERT:b=\"+\";break;case DIFF_DELETE:b=\"-\";break;case DIFF_EQUAL:b=\" \"}a[c+1]=b+encodeURI(this.diffs[c][1])+\"\\n\"}return a.join(\"\").replace(/%20/g,\" \")};\n" +
-"this.diff_match_patch=diff_match_patch;this.DIFF_DELETE=DIFF_DELETE;this.DIFF_INSERT=DIFF_INSERT;this.DIFF_EQUAL=DIFF_EQUAL;\n", dir+"diff_match_patch.js");
+"this.diff_match_patch=diff_match_patch;this.DIFF_DELETE=DIFF_DELETE;this.DIFF_INSERT=DIFF_INSERT;this.DIFF_EQUAL=DIFF_EQUAL;\n", dirJs+"/diff_match_patch.js");
                 
                 
                 try {
-                    File css=new File(dir+"/bootstrap.min.css");
-                    File js=new File(dir+"/bootstrap.min.js");
-                    File jq=new File(dir+"/jquery.min.js"); 
-                    File po=new File(dir+"/popper.min.js"); 
+                    File css=new File(dirJs+"/bootstrap.min.css");
+                    File js=new File(dirJs+"/bootstrap.min.js");
+                    File jq=new File(dirJs+"/jquery.min.js"); 
+                    File po=new File(dirJs+"/popper.min.js"); 
+                    File cu=new File(dirJs+"/cuerpo.js"); 
+                    File na=new File(dirJs+"/nav.js"); 
+                    File ht=new File(dir+"/index.html"); 
                     streamToFile(this.getClass().getResourceAsStream("bootstrap.min.txt"),css.getPath());
                     streamToFile(this.getClass().getResourceAsStream("bootstrap.min.js"),js.getPath());
                     streamToFile(this.getClass().getResourceAsStream("jquery.min.js"),jq.getPath()); 
                     streamToFile(this.getClass().getResourceAsStream("popper.min.js"),po.getPath()); 
+                    streamToFile(this.getClass().getResourceAsStream("cuerpo.js"),cu.getPath()); 
+                    streamToFile(this.getClass().getResourceAsStream("nav.js"),na.getPath()); 
+                    streamToFile(this.getClass().getResourceAsStream("index.html"),ht.getPath()); 
 
                 } catch (IOException ex) {
                     Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                System.out.println(fileIn.getName());
-                String html = dir+"index.html";
-                generarDiffHtml(fileIn.getAbsolutePath(),fileOut.getAbsolutePath(),html);
+                } 
+                String entrada = dirJs+"/entrada.js";
+                generarDiffHtml(fileIn.getAbsolutePath(),fileOut.getAbsolutePath(),entrada);
                 seletorArchivosIn.updateUI();
-                File htmlFile = new File(html);
+                File htmlFile = new File(dir+"/index.html");
                 try {
                     Desktop.getDesktop().browse(htmlFile.toURI());
                 } catch (IOException ex) {
                     Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                } 
             }
 
         }
@@ -809,8 +811,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             int seleccion =fc.showSaveDialog(jPanel1);// sacar jPanell si no anda
             if (seleccion == JFileChooser.APPROVE_OPTION){
                 File fileOut = fc.getSelectedFile();
-                if (fileOut != null){
-                   // System.out.println(ejecutablePath+" -op=r -in="+fileIn+" -out="+convertirHam(fileOut.getAbsolutePath()));
+                if (fileOut != null){ 
                     String resultado=ejecutar(ejecutablePath+" -op=r -in=\""+fileIn+"\" -out=\""+convertirHam(fileOut.getAbsolutePath()))+"\"";
                     if (resultado.length() >1){
                         JOptionPane.showMessageDialog(new JFrame(),resultado,"Corregir error", JOptionPane.ERROR_MESSAGE);
@@ -835,8 +836,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             int seleccion =fc.showSaveDialog(jPanel1);// sacar jPanell si no anda
             if (seleccion == JFileChooser.APPROVE_OPTION){
                 File fileOut = fc.getSelectedFile();
-                if (fileOut != null){
-                    System.out.println(ejecutablePath+" -op=i -in="+fileIn+" -out="+convertirHam(fileOut.getAbsolutePath()));
+                if (fileOut != null){ 
                     String resultado=ejecutar(ejecutablePath+" -op=i -in=\""+fileIn+"\" -out=\""+convertirHam(fileOut.getAbsolutePath())+"\"");
                     if (resultado.length() >1){
                         JOptionPane.showMessageDialog(new JFrame(),resultado,"Introducir error", JOptionPane.ERROR_MESSAGE);
@@ -850,12 +850,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     private void botonComprobarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonComprobarActionPerformed
         File fileIn = this.seletorArchivosIn.getSelectedFile();
-        if (fileIn != null){
-           // System.out.println(ejecutablePath+" -op=e -in="+fileIn);
+        if (fileIn != null){ 
             String resultado=ejecutar(ejecutablePath+" -op=e -in=\""+fileIn+"\"");
             String[] arr=resultado.split("\n");
-            if (arr.length > 1){
-                System.out.println(arr[0]);
+            if (arr.length > 1){ 
                 String mensajeErrores = getStringErrores(arr);
                 JOptionPane.showMessageDialog(new JFrame(), "Contiene error: "+ mensajeErrores, "Comprobar error", JOptionPane.ERROR_MESSAGE);
             }else{
@@ -878,8 +876,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         int seleccion =fc.showSaveDialog(jPanel1);// sacar jPanell si no anda
         if (seleccion == JFileChooser.APPROVE_OPTION){
             File fileOut = fc.getSelectedFile();
-            if (fileOut != null){
-              //  System.out.println(ejecutablePath+" -op=dp -in=\""+fileIn+"\" -out=\""+fileOut+"\"");
+            if (fileOut != null){ 
                 String resultado=ejecutar(ejecutablePath+" -op=dp -in=\""+fileIn+"\" -out=\""+fileOut+"\"");
                 if (resultado.length() >1){
                     JOptionPane.showMessageDialog(new JFrame(),"<html><b>Archivo entrada: </b>"+fileIn+"<br><b>Archivo salida: </b>"+fileOut+"<br><b>Tardo: </b>"+resultado,"Desproteger Archivo", JOptionPane.INFORMATION_MESSAGE);
@@ -902,8 +899,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         int seleccion =fc.showSaveDialog(jPanel1);// sacar jPanell si no anda
         if (seleccion == JFileChooser.APPROVE_OPTION){
             File fileOut = fc.getSelectedFile();
-            if (fileOut != null){
-              //  System.out.println(ejecutablePath+" -op=p -in="+fileIn+" -out="+convertirHam(fileOut.getAbsolutePath())+" -cod="+codificacion);
+            if (fileOut != null){ 
                 String resultado=ejecutar(ejecutablePath+" -op=p -in=\""+fileIn+"\" -out=\""+convertirHam(fileOut.getAbsolutePath())+"\" -cod="+codificacion);
                 if (resultado.length() >1){
                     JOptionPane.showMessageDialog(new JFrame(),"<html><b>Archivo entrada: </b>"+fileIn+"<br><b>Archivo salida: </b>"+fileOut+"<br><b>Tardo: </b>"+resultado ,"Proteger Archivo", JOptionPane.INFORMATION_MESSAGE);
@@ -947,10 +943,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         int seleccion =fc.showSaveDialog(jPanel1);// sacar jPanell si no anda
         if (seleccion == JFileChooser.APPROVE_OPTION){
             File fileOut = fc.getSelectedFile();
-            if (fileOut != null){
-               // System.out.println(ejecutablePath+" -op=c -in="+fileIn+" -out="+fileOut);
-                String resultado=ejecutar(ejecutablePath+" -op=c -in=\""+fileIn+"\" -out=\""+fileOut+"\"");
-                System.out.println(resultado);
+            if (fileOut != null){ 
+                String resultado=ejecutar(ejecutablePath+" -op=c -in=\""+fileIn+"\" -out=\""+fileOut+"\""); 
                 JOptionPane.showMessageDialog(new JFrame(),resultado , "Comprimir", JOptionPane.INFORMATION_MESSAGE);
                 seletorArchivosIn.updateUI();
             }
@@ -958,12 +952,14 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }//GEN-LAST:event_botonComprimirActionPerformed
 
     private void stringToFile(String entrada, String fileOut){
-         try {
-            // Assume default encoding.
+         try { 
             FileWriter fileWriter = new FileWriter(fileOut);
             BufferedWriter bufferedWriter =
                 new BufferedWriter(fileWriter); 
-            bufferedWriter.write(entrada);  
+             String[] split = entrada.split("\n"); 
+             for (int i=0;i< split.length;i++){
+                bufferedWriter.write(split[i]+"\n");   
+             }
             bufferedWriter.close();
         }
         catch(IOException ex) {
@@ -975,7 +971,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     
     private String fileToString(String fileName) { 
      String line = null; 
-     String res="";
+     StringBuilder res=new StringBuilder(""); 
         try { 
             FileReader fileReader = 
                 new FileReader(fileName);
@@ -984,7 +980,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 new BufferedReader(fileReader);
 
             while((line = bufferedReader.readLine()) != null) {
-                res += line+"\n";
+                res.append(line+"\n");
             }   
  
             bufferedReader.close();         
@@ -999,7 +995,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 "Error reading file '" 
                 + fileName + "'");          
         } 
-        return res;
+        return res.toString();
 
 }
     private String generarHtml(String fileIn, String fileOut){
@@ -1007,81 +1003,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         text1=text1.replace("`", "'");
         String text2= fileToString(fileOut);
         text2=text2.replace("`", "'");  
-        return  "<!doctype html>\n" +
-"<html lang=\"en\">\n" +
-"  <head>\n" +
-"    <!-- Required meta tags -->\n" +
-"    <meta charset=\"utf-8\">\n" +
-"    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n" +
-"\n" +
-"    <!-- Bootstrap CSS -->\n" +
-"    <link rel=\"stylesheet\" href=\"bootstrap.min.css\">\n" +
-"    <script src=\"diff_match_patch.js\"></script>\n" +
-"\n" +
-"    <title>Diff</title>\n" +
-"  </head>\n" +
-"  <body>\n" +
-"    <main role=\"main\" class=\"container\">\n" +
-"      <div class=\"row\">\n" +
-"        <div class=\"jumbotron\" id=\"cuerpo\" style=\"padding-top: 10px;margin-top: 10px;\">\n" +
-"          <script>\n" +
+        return 
 "            var dmp = new diff_match_patch();" + 
-"            var diff = dmp.diff_main( `"+text1+"`,  `"+text2+"`);\n" +
-"            dmp.diff_cleanupSemantic(diff);\n" +
-"            var resultado=\"\";\n" +
-"            var i =0;\n" +
-"            var id=0;\n" +
-"            for (;i<diff.length;i++){\n" +
-"                switch (diff[i][0]) {\n" +
-"                  case -1:\n" +
-"                        resultado+='<p class=\"focus text-danger\" id=\"id'+id+'\" style=\"background:#ffe6e6;\">-'+diff[i][1]+'</p>';\n" +
-"                        id++;\n" +
-"                    break;\n" +
-"                    case 0:\n" +
-"                        resultado+=diff[i][1];\n" +
-"\n" +
-"                      break;\n" +
-"                      case 1:\n" +
-"                        resultado+='<p class=\"focus text-success\" id=\"id'+id+'\"   style=\"background:#e6ffe6;\">+'+diff[i][1]+'</p>';\n" +
-"                        id++;\n" +
-"                        break;\n" +
-"                  default:\n" +
-"                  resultado+='\\n';\n" +
-"                }\n" +
-"              }\n" +
-"              resultado = resultado.split(\"\\n\").join(\"<br>\");\n" +
-"              document.getElementById('cuerpo').innerHTML =resultado; \n" +
-"            </script>\n" +
-"        </div>\n" +
-"      </main>\n" +
-"      <nav class=\"navbar fixed-bottom navbar-expand-sm navbar-dark bg-dark\">\n" +
-"      <a class=\"navbar-brand\" href=\"#\">Diferencia Archivos</a>\n" +
-"      <div class=\"collapse navbar-collapse\" id=\"navbarCollapse\">\n" +
-"        <ul class=\"navbar-nav mr-auto\">\n" +
-"          <script type=\"text/javascript\">\n" +
-"            var cadena = \"\";\n" +
-"            var indice = 0;\n" +
-"            if (id== 0){\n" +
-"              cadena += `<li class=\"nav-item\">\n" +
-"                            <a class=\"nav-link disabled\">No existen diferencias</a>\n" +
-"                          </li>`;\n" +
-"            }\n" +
-"            for (;indice<id;indice++){\n" +
-"              cadena += `<li class=\"nav-item\">\n" +
-"                            <a class=\"nav-link\" href=\"#id`+indice+`\">`+(indice+1)+`</a>\n" +
-"                          </li>`;\n" +
-"              }\n" +
-"            document.write(cadena);\n" +
-"          </script>\n" +
-"        </ul>\n" +
-"      </div>\n" +
-"    </nav>\n" +
-"    </div>\n" +
-"    <script src=\"jquery.min.js\"></script>\n" +
-"<script src=\"popper.min.js\"></script>\n" +
-"<script src=\"bootstrap.min.js\" ></script>\n" +
-"  </body>\n" +
-"</html>";
+"            var diff = dmp.diff_main( `"+text1+"`,  `"+text2+"`);\n";
     }
     private void generarDiffHtml( String fileIn, String fileOut, String html){
        stringToFile(generarHtml(fileIn,fileOut),html);
@@ -1090,8 +1014,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
          InputStream is = null;
         OutputStream os = null;
         try {
-             Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.INFO, fileIn+fileOut);
-            System.out.println(fileIn+fileOut);
+             Logger.getLogger(VentanaPrincipal.class.getName()).log(Level.INFO, fileIn+fileOut); 
             is = new FileInputStream(fileIn);
             os = new FileOutputStream(fileOut);
             byte[] buffer = new byte[1024];
